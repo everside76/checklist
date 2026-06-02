@@ -67,19 +67,6 @@
   .screen.active{display:block;}
   @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
 
-  .home-brand{
-    position:relative; overflow:hidden; min-height:202px; margin:-16px -16px 14px; padding:20px 20px 22px;
-    color:#fff; background-color:var(--brand);
-    background-image:linear-gradient(180deg,rgba(83,12,10,.04),rgba(83,12,10,.34)),url("assets/goban-header-texture.png");
-    background-size:cover; background-position:left center; box-shadow:0 14px 28px rgba(126,29,24,.18);
-  }
-  .home-brand:after{content:""; position:absolute; inset:auto -40px -64px auto; width:190px; height:190px; border-radius:50%; background:rgba(255,255,255,.08);}
-  .home-logo{width:76px; height:76px; display:flex; align-items:center; justify-content:center; background:#fff; border-radius:16px; padding:8px; box-shadow:0 14px 28px rgba(0,0,0,.18);}
-  .home-logo img{max-width:100%; max-height:100%; object-fit:contain;}
-  .home-copy{position:relative; margin-top:14px; max-width:320px;}
-  .home-copy p{margin:0 0 4px; font-size:12px; font-weight:850; opacity:.84;}
-  .home-copy h2{margin:0; font-size:24px; line-height:1.14; letter-spacing:0;}
-  .home-copy .sub{margin-top:7px; font-size:12px; line-height:1.42; opacity:.76;}
 
   .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:14px; box-shadow:var(--shadow-sm);}
   .card h2{font-size:15px; margin:0 0 12px; letter-spacing:0;}
@@ -241,17 +228,11 @@
   .cl li{font-size:13.5px; margin:5px 0; line-height:1.5;}
   @media (max-width:380px){
     .screen{padding-left:12px; padding-right:12px;}
-    .home-brand{margin-left:-12px; margin-right:-12px;}
     .btn-row{gap:8px;}
     .ans{min-height:60px;}
   }
   @media (max-width:560px){
     .screen{padding-top:12px;}
-    .home-brand{min-height:156px; padding:14px 20px 16px; margin-top:-12px; margin-bottom:12px;}
-    .home-logo{width:60px; height:60px; border-radius:14px; padding:6px;}
-    .home-copy{margin-top:9px;}
-    .home-copy h2{font-size:22px;}
-    .home-copy .sub{display:none;}
     .intake-card{padding:14px;}
     label.field{margin-bottom:8px;}
     .field > span{margin-bottom:4px;}
@@ -300,14 +281,6 @@
 
   <!-- HOME -->
   <section class="screen active" id="screen-home">
-    <div class="home-brand">
-      <div class="home-logo"><img src="goban_bi.png" alt="고반식당 로고" /></div>
-      <div class="home-copy">
-        <p>고반식당 MOT</p>
-        <h2>매장 서비스 점검</h2>
-        <div class="sub">브랜드 기준에 맞춰 서비스, 품질, 청결, 안전 항목을 빠르게 점검합니다.</div>
-      </div>
-    </div>
     <div class="card intake-card">
       <h2 class="card-title"><span class="icon"><svg><use href="#i-store"></use></svg></span>고반식당 점검 정보</h2>
       <label class="field"><span>지점명 <i class="req">*</i></span>
@@ -555,8 +528,12 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.2.0";
 const CHANGELOG = [
+  {v:"1.2.0", date:"2026-06-02", items:[
+    "모바일 UI 리뉴얼 — 상단바 네비게이션(홈·이력·설정), 로고 적용",
+    "홈 화면 상단 배너 제거",
+  ]},
   {v:"1.1.0", date:"2026-06-02", items:[
     "고반식당 전용 MOT 점검 앱 (8단계 50개 항목 + 절대 금지 10계명)",
     "주문방식별 항목 분기, 메아리 인사 가산점(+1), 점수·등급 자동 계산",
