@@ -419,7 +419,7 @@
     </div>
     <div class="card">
       <h2>점검 안내</h2>
-      <div class="hint">평가: ○ 이행=0점 / △ 미흡=−1점 / × 불이행=−2점 · 100점 만점 차감식<br>
+      <div class="hint">평가: ○ 이행=0점 / △ 미흡 / × 불이행 (문항별 배점 차등, 미흡=불이행의 절반) · 100점 만점 차감식<br>
         🚫 절대 금지 10계명 위반: 1건당 −5점<br>
         등급: S(90↑) / A(80~89) / B(70~79) / C(70 미만)</div>
     </div>
@@ -473,7 +473,7 @@ const ITEMS_GOBAN = [
   {no:"13", stage:"서빙", type:"S", order:"공통", text:`'추가 반찬은 셀프바를 이용해 주세요' 안내를 하는가? (셀프바가 없으면 '직원을 불러주세요' 멘트)`},
   // 그릴링
   {no:"14", stage:"그릴링", type:"S", order:"공통", text:`숯 제공 시 '많이 뜨겁습니다. 조심하세요' 라고 안내하는가?`},
-  {no:"15", stage:"그릴링", type:"S", order:"공통", text:`고기 제공 전 온도계로 불판 온도를 확인하는가? (★불판이 달궈지지 않은 상태에서 고기를 올리면 −3점)`},
+  {no:"15", stage:"그릴링", type:"S", order:"공통", text:`고기 제공 전 온도계로 불판 온도를 확인하는가? (★불판이 달궈지지 않은 상태에서 고기를 올리면 −5점)`},
   {no:"16", stage:"그릴링", type:"S", order:"공통", text:`그릴링 전/후 적절한 타이밍에 곁들임에 좋은 반찬·소스를 설명하는가?`},
   {no:"17", stage:"그릴링", type:"S", order:"공통", text:`고기 부위별 적정 익힘 정도를 설명하고, 고객이 원하는 익힘 정도가 있으면 맞춰서 그릴링 해드린다고 안내하는가? (예: 삼겹살 90%, 목살 80%)`},
   {no:"18", stage:"그릴링", type:"S", order:"공통", text:`구이용 곁들임(김치 필수)을 타이밍에 맞게 함께 그릴링 해주는가? (예: 고기 기름이 충분히 흘러내릴 때 불판에 올린다)`},
@@ -500,6 +500,11 @@ const ITEMS_GOBAN = [
   {no:"35", stage:"클레임", type:"S", order:"공통", text:`클레임 해결 후 '새로 드린 음식은 괜찮으신가요?' 사후 확인을 하는가?`},
 ];
 
+// 문항별 배점(px = 불이행 시 차감점 = 문항 만점). 미흡 = 절반. 기본 2점, 가중 항목 4점.
+// 가중(−4) 항목: 1(입점 인사), 11(서빙 멘트), 14~22(그릴링 전체), 29(환송 인사)
+const HEAVY_PX = {"1":4,"11":4,"14":4,"15":4,"16":4,"17":4,"18":4,"19":4,"20":4,"21":4,"22":4,"29":4};
+ITEMS_GOBAN.forEach(it=>{ it.px = HEAVY_PX[it.no] || 2; });
+
 const BRANDS = {
   "고반식당": { stages:["입점","주문","서빙","그릴링","식사중","계산 및 환송","퇴식","클레임"], items:ITEMS_GOBAN },
 };
@@ -524,8 +529,13 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.6.0";
 const CHANGELOG = [
+  {v:"1.6.0", date:"2026-06-02", items:[
+    "체크리스트 v4_1 항목별 가중 배점 반영 — 문항마다 불이행 −2 또는 −4(가중), 미흡은 절반",
+    "가중 항목: 입점 인사·서빙 멘트·그릴링 전체·환송 인사",
+    "항목 카드에 항목별 감점 점수 표시",
+  ]},
   {v:"1.5.0", date:"2026-06-02", items:[
     "절대 금지 10계명 위반 감점을 1건당 3점 → 5점으로 상향",
   ]},
@@ -690,6 +700,7 @@ function itemCard(it){
   const sel=a.value||"";
   const noteOpen=a.note?"open":"";
   const star=esc(it.text).replace(/(★[^)]*\))/g,'<span class="star">$1</span>');
+  const px=itemMax(it);
   const bonus = it.bonus ? `<button class="bonus-btn ${a.bonusOn?'on':''}" onclick="toggleBonus('${esc(it.no)}')">★ ${esc(it.bonusLabel||'가산')} 가산 +${it.bonus}${a.bonusOn?' (적용됨)':''}</button>` : "";
   return `<div class="item ${sel?'answered':''} ${sel==='T'?'flag-T':''} ${sel==='X'?'flag-X':''}" id="item-${esc(it.no)}">
     <div class="item-top">
@@ -699,8 +710,8 @@ function itemCard(it){
     ${it.criteria ? `<div class="item-crit">📌 ${esc(it.criteria)}</div>` : ""}
     <div class="ans-row">
       <div class="ans ${sel==='O'?'sel-O':''}" onclick="setAnswer('${esc(it.no)}','O')"><span class="sym">○</span><span class="lbl">이행</span></div>
-      <div class="ans ${sel==='T'?'sel-T':''}" onclick="setAnswer('${esc(it.no)}','T')"><span class="sym">△</span><span class="lbl">미흡 −1</span></div>
-      <div class="ans ${sel==='X'?'sel-X':''}" onclick="setAnswer('${esc(it.no)}','X')"><span class="sym">✕</span><span class="lbl">불이행 −2</span></div>
+      <div class="ans ${sel==='T'?'sel-T':''}" onclick="setAnswer('${esc(it.no)}','T')"><span class="sym">△</span><span class="lbl">미흡 −${px/2}</span></div>
+      <div class="ans ${sel==='X'?'sel-X':''}" onclick="setAnswer('${esc(it.no)}','X')"><span class="sym">✕</span><span class="lbl">불이행 −${px}</span></div>
     </div>
     ${bonus}
     <button class="note-toggle" onclick="toggleNote('${esc(it.no)}')">${icon('i-note')} 비고 ${a.note?'(작성됨)':''}</button>
@@ -777,7 +788,8 @@ function toggleRule(no){
 function setRuleAction(no,v){ if(!session.rules[no]) session.rules[no]={}; session.rules[no].action=v; saveDraft(); }
 
 /* ---------- 점수 계산 ---------- */
-function penaltyOf(v){ return v==="T"?1 : v==="X"?2 : 0; }
+function itemMax(it){ return (it && it.px) ? it.px : 2; }          // 불이행 시 차감(=문항 배점)
+function penaltyOf(it, v){ const m=itemMax(it); return v==="X"?m : v==="T"?m/2 : 0; }
 function compute(){
   const items=visibleItems();
   let ok=0,tri=0,x=0,deduct=0,unanswered=0,bonus=0;
@@ -788,7 +800,7 @@ function compute(){
     if(i.bonus && a.bonusOn) bonus+=i.bonus;
     if(!v){unanswered++; return;}
     if(v==="O")ok++; else if(v==="T")tri++; else if(v==="X")x++;
-    const p=penaltyOf(v); deduct+=p;
+    const p=penaltyOf(i, v); deduct+=p;
     stageMap[i.stage]=(stageMap[i.stage]||0)+p;
   });
   const ruleViolations=RULES.filter(r=>(session.rules[r.no]||{}).occurred);
@@ -876,7 +888,7 @@ function buildPayload(){
       const a=session.answers[i.no]||{};
       return {no:i.no, stage:i.stage, type:i.type, text:i.text,
         value:a.value||"", label:({O:"이행",T:"미흡",X:"불이행"})[a.value]||"미응답",
-        penalty:penaltyOf(a.value), bonus:(i.bonus&&a.bonusOn)?i.bonus:0, note:a.note||""};
+        penalty:penaltyOf(i, a.value), max:itemMax(i), bonus:(i.bonus&&a.bonusOn)?i.bonus:0, note:a.note||""};
     }),
     rules:r.ruleViolations.map(rl=>({no:rl.no,key:rl.key,desc:rl.desc,action:(session.rules[rl.no]||{}).action||""}))
   };
@@ -946,7 +958,7 @@ function downloadCSV(){
   lines.push(["No","단계","구분","항목","응답","감점","비고"].join(","));
   r.items.forEach(i=>{
     const a=session.answers[i.no]||{};
-    lines.push([i.no,i.stage,i.type,i.text,({O:"이행",T:"미흡",X:"불이행"})[a.value]||"미응답",penaltyOf(a.value),a.note||""].map(csv).join(","));
+    lines.push([i.no,i.stage,i.type,i.text,({O:"이행",T:"미흡",X:"불이행"})[a.value]||"미응답",penaltyOf(i,a.value),a.note||""].map(csv).join(","));
   });
   if(r.ruleViolations.length){
     lines.push(""); lines.push(["10계명 위반","키워드","내용","세부사항"].join(","));
