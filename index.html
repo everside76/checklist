@@ -501,8 +501,9 @@ const ITEMS_GOBAN = [
 ];
 
 // 문항별 배점(px = 불이행 시 차감점 = 문항 만점). 미흡 = 절반. 기본 2점, 가중 항목 4점.
-// 가중(−4) 항목: 1(입점 인사), 11(서빙 멘트), 14~22(그릴링 전체), 29(환송 인사)
-const HEAVY_PX = {"1":4,"11":4,"14":4,"15":4,"16":4,"17":4,"18":4,"19":4,"20":4,"21":4,"22":4,"29":4};
+// 가중(−4) 항목: 1~4(입점 인사·표정·만석), 11(서빙 멘트), 14~22(그릴링 전체), 29(환송 인사)
+// → 한 주문방식(35문항) 전부 불이행 시 정확히 −100(=0점)
+const HEAVY_PX = {"1":4,"2":4,"3":4,"4":4,"11":4,"14":4,"15":4,"16":4,"17":4,"18":4,"19":4,"20":4,"21":4,"22":4,"29":4};
 ITEMS_GOBAN.forEach(it=>{ it.px = HEAVY_PX[it.no] || 2; });
 
 const BRANDS = {
@@ -529,8 +530,11 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.6.0";
+const APP_VERSION = "1.6.1";
 const CHANGELOG = [
+  {v:"1.6.1", date:"2026-06-02", items:[
+    "입점 2·3·4번 배점 상향(불이행 −4/미흡 −2) → 한 주문방식 전부 불이행 시 정확히 0점",
+  ]},
   {v:"1.6.0", date:"2026-06-02", items:[
     "체크리스트 v4_1 항목별 가중 배점 반영 — 문항마다 불이행 −2 또는 −4(가중), 미흡은 절반",
     "가중 항목: 입점 인사·서빙 멘트·그릴링 전체·환송 인사",
