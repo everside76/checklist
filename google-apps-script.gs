@@ -87,7 +87,7 @@ function doPost(e) {
       rows.push([
         stamp, data.id || '', data.brand || '', data.store || '', data.date || '',
         '계명' + (r.no || ''), '10계명', r.key || '',
-        r.desc || '', '위반', 3, 0, r.action || ''
+        r.desc || '', '위반', 5, 0, r.action || ''
       ]);
     });
     if (rows.length) {

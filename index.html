@@ -344,7 +344,7 @@
   <section class="screen" id="screen-rules">
     <div class="card" style="background:var(--bad-bg); border-color:var(--bad);">
       <h2 style="margin:0;">❌ 절대 금지 행동 10계명</h2>
-      <p class="hint" style="margin-top:6px;">발생한 항목만 켜세요. <b>체크 1건당 총점에서 3점 추가 감점</b>되며, 세부사항을 반드시 기록해 주세요.</p>
+      <p class="hint" style="margin-top:6px;">발생한 항목만 켜세요. <b>체크 1건당 총점에서 5점 추가 감점</b>되며, 세부사항을 반드시 기록해 주세요.</p>
     </div>
     <div id="ruleList"></div>
     <button class="btn" onclick="showScreen('check')">체크리스트로 돌아가기</button>
@@ -420,7 +420,7 @@
     <div class="card">
       <h2>점검 안내</h2>
       <div class="hint">평가: ○ 이행=0점 / △ 미흡=−1점 / × 불이행=−2점 · 100점 만점 차감식<br>
-        🚫 절대 금지 10계명 위반: 1건당 −3점<br>
+        🚫 절대 금지 10계명 위반: 1건당 −5점<br>
         등급: S(90↑) / A(80~89) / B(70~79) / C(70 미만)</div>
     </div>
     <div class="card">
@@ -518,14 +518,17 @@ const RULES = [
   {no:"10", key:"마감준수", desc:"마감 시간대에 고객 퇴점 전 청소를 시작하기"},
 ];
 
-const RULE_PENALTY = 3;
+const RULE_PENALTY = 5;
 const WEEKDAYS = ["일","월","화","수","목","금","토"];
 const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" };
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.4.2";
+const APP_VERSION = "1.5.0";
 const CHANGELOG = [
+  {v:"1.5.0", date:"2026-06-02", items:[
+    "절대 금지 10계명 위반 감점을 1건당 3점 → 5점으로 상향",
+  ]},
   {v:"1.4.2", date:"2026-06-02", items:[
     "10계명 입력 항목을 '시정 조치'에서 '세부사항'(발생 상황·내용)으로 변경",
   ]},
