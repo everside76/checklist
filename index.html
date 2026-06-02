@@ -54,11 +54,16 @@
   .bar-brand{display:flex; align-items:center; gap:10px; min-width:0; flex:1;}
   .bar-logo{width:34px; height:34px; border-radius:10px; background:#fff; padding:3px; object-fit:contain; box-shadow:0 4px 12px rgba(0,0,0,.18);}
   .appbar h1{font-size:17px; font-weight:800; margin:0; flex:1; letter-spacing:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .appbar .right{font-size:12px; font-weight:800; opacity:.98; color:inherit; background:rgba(255,255,255,.16);
-    border:1px solid rgba(255,255,255,.2); padding:6px 10px; border-radius:999px; cursor:pointer; white-space:nowrap; font-family:inherit;}
-  .appbar .right:active{transform:scale(.96);}
+  .app-actions{display:flex; align-items:center; gap:6px; flex:0 0 auto;}
+  .icon-btn{
+    width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center;
+    color:#fff; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.18);
+    border-radius:10px; cursor:pointer; padding:0; font-family:inherit;
+  }
+  .icon-btn .icon{width:19px; height:19px;}
+  .icon-btn:active{transform:scale(.96);}
 
-  .screen{display:none; padding:16px 16px 148px; animation:fade .18s ease;}
+  .screen{display:none; padding:16px 16px 36px; animation:fade .18s ease;}
   .screen.active{display:block;}
   @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
 
@@ -199,31 +204,9 @@
   .stage-score:last-child{border-bottom:none;}
   .stage-score b{color:var(--bad);} .stage-score b.zero{color:var(--ok);}
 
-  .footer{
-    position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:560px;
-    background:rgba(255,255,255,.94); backdrop-filter:blur(16px); border-top:1px solid var(--line); padding:12px 16px calc(12px + env(safe-area-inset-bottom));
-    display:none; z-index:40; box-shadow:0 -10px 26px rgba(20,24,32,.1);
-  }
-  .footer.show{display:block;}
-  .footer .mini{font-size:12px; color:var(--sub); text-align:center; margin-bottom:8px;}
-  .footer.show + .bottomnav{display:none;}
-
-  .bottomnav{
-    position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:560px;
-    display:grid; grid-template-columns:repeat(3,1fr); gap:4px;
-    padding:8px 14px calc(8px + env(safe-area-inset-bottom));
-    background:rgba(255,255,255,.96); backdrop-filter:blur(18px);
-    border-top:1px solid var(--line); box-shadow:0 -10px 28px rgba(20,24,32,.1); z-index:39;
-  }
-  .navbtn{
-    min-height:58px; border:0; border-radius:12px; background:transparent; color:var(--sub);
-    font-family:inherit; font-size:11px; font-weight:800; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; gap:4px; cursor:pointer;
-  }
-  .navbtn .icon{width:22px; height:22px;}
-  .navbtn.active{color:var(--brand); background:var(--brand-soft);}
-  .home-actions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
-  .home-actions .btn{padding:14px; font-size:15px; box-shadow:var(--shadow-sm);}
+  .check-summary{font-size:13px; color:var(--sub); text-align:center; margin:12px 0 10px;}
+  .shortcut-guide{display:none; padding:12px; border-radius:10px; background:var(--bg); border:1px solid var(--line);}
+  .shortcut-guide.open{display:block;}
 
   .hist{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:10px; box-shadow:var(--shadow-sm);}
   .hist-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
@@ -275,7 +258,7 @@
     input[type=text], input[type=date], textarea, select{padding:10px 12px;}
     .chip{padding:8px 12px;}
     .btn{padding:14px;}
-    .home-actions{margin-top:10px;}
+    .shortcut-guide{font-size:12px;}
   }
   @media (prefers-color-scheme: dark){
     body{background:linear-gradient(180deg,#181b22 0%,var(--bg) 36%,var(--bg) 100%);}
@@ -284,9 +267,6 @@
     .chip, .ans, .stat{background:#181b22; color:var(--ink);}
     input:focus,textarea:focus,select:focus{background:#1f232b;}
     .check-sticky{background:rgba(20,22,27,.94);}
-    .footer{background:rgba(27,30,37,.94);}
-    .bottomnav{background:rgba(27,30,37,.94);}
-    .navbtn.active{background:var(--brand-soft);}
     .btn.ghost{background:#20242c;}
   }
 </style>
@@ -309,9 +289,13 @@
     <button class="back" id="backBtn" onclick="goBack()">‹</button>
     <div class="bar-brand">
       <img class="bar-logo" src="assets/goban-mark.png" alt="고반식당" />
-      <h1 id="barTitle">고반식당 MOT 점검</h1>
+      <h1 id="barTitle">MOT 점검</h1>
     </div>
-    <button class="right" id="barRight" onclick="showScreen('changelog')" title="변경 이력 보기"></button>
+    <div class="app-actions" aria-label="상단 메뉴">
+      <button class="icon-btn" onclick="showScreen('home')" title="홈"><span class="icon"><svg><use href="#i-home"></use></svg></span></button>
+      <button class="icon-btn" onclick="showScreen('history')" title="점검 이력"><span class="icon"><svg><use href="#i-list"></use></svg></span></button>
+      <button class="icon-btn" onclick="showScreen('settings')" title="설정"><span class="icon"><svg><use href="#i-settings"></use></svg></span></button>
+    </div>
   </div>
 
   <!-- HOME -->
@@ -353,10 +337,6 @@
       </label>
     </div>
     <button class="btn" onclick="startInspection()">점검 시작하기</button>
-    <div class="home-actions">
-      <button class="btn secondary" onclick="showScreen('history')"><span class="icon"><svg><use href="#i-list"></use></svg></span>점검 이력</button>
-      <button class="btn secondary" onclick="showScreen('settings')"><span class="icon"><svg><use href="#i-settings"></use></svg></span>설정</button>
-    </div>
     <p class="hint" id="resumeHint" style="display:none; text-align:center;"></p>
   </section>
 
@@ -373,6 +353,8 @@
     <div class="btn-row" style="margin-top:8px;">
       <button class="btn ghost" onclick="showScreen('rules')"><span class="icon"><svg><use href="#i-shield"></use></svg></span>절대 금지 10계명</button>
     </div>
+    <div class="check-summary" id="checkSummary"></div>
+    <button class="btn" onclick="showScreen('result');"><span class="icon"><svg><use href="#i-result"></use></svg></span>결과 보기 →</button>
   </section>
 
   <!-- RULES -->
@@ -383,6 +365,8 @@
     </div>
     <div id="ruleList"></div>
     <button class="btn" onclick="showScreen('check')">체크리스트로 돌아가기</button>
+    <div class="check-summary" id="ruleSummary"></div>
+    <button class="btn" onclick="showScreen('result');"><span class="icon"><svg><use href="#i-result"></use></svg></span>결과 보기 →</button>
   </section>
 
   <!-- RESULT -->
@@ -431,6 +415,19 @@
   <!-- SETTINGS -->
   <section class="screen" id="screen-settings">
     <div class="card">
+      <h2 class="card-title"><span class="icon"><svg><use href="#i-home"></use></svg></span>홈 화면 바로가기</h2>
+      <p class="hint" style="margin-top:0;">직원 휴대폰 홈 화면에 앱 아이콘을 추가하면 일반 앱처럼 바로 실행할 수 있습니다.</p>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn" id="installBtn" onclick="installShortcut()"><span class="icon"><svg><use href="#i-home"></use></svg></span>바로가기 만들기</button>
+        <button class="btn secondary" onclick="toggleShortcutGuide()">방법 보기</button>
+      </div>
+      <div class="hint shortcut-guide" id="shortcutGuide" style="margin-top:12px;">
+        <b>iPhone Safari</b>: 공유 버튼 → 홈 화면에 추가<br>
+        <b>Android Chrome</b>: 오른쪽 위 메뉴 → 앱 설치 또는 홈 화면에 추가<br>
+        브라우저가 자동 설치를 지원하면 위의 바로가기 만들기 버튼으로 바로 추가할 수 있습니다.
+      </div>
+    </div>
+    <div class="card">
       <h2>구글 시트 연동</h2>
       <label class="field" style="margin-bottom:0;"><span>Apps Script 배포 URL</span>
         <input type="text" id="s-url" placeholder="기본 연동 URL 사용 중" autocomplete="off" /></label>
@@ -465,16 +462,6 @@
     <div id="changelogList"></div>
   </section>
 
-  <!-- FOOTER -->
-  <div class="footer" id="footer">
-    <div class="mini" id="footerMini"></div>
-    <button class="btn" onclick="showScreen('result');"><span class="icon"><svg><use href="#i-result"></use></svg></span>결과 보기 →</button>
-  </div>
-  <nav class="bottomnav" aria-label="하단 메뉴">
-    <button class="navbtn active" data-nav="home" onclick="showScreen('home')"><span class="icon"><svg><use href="#i-home"></use></svg></span><span>홈</span></button>
-    <button class="navbtn" data-nav="history" onclick="showScreen('history')"><span class="icon"><svg><use href="#i-list"></use></svg></span><span>이력</span></button>
-    <button class="navbtn" data-nav="settings" onclick="showScreen('settings')"><span class="icon"><svg><use href="#i-settings"></use></svg></span><span>설정</span></button>
-  </nav>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -579,6 +566,7 @@ const CHANGELOG = [
 
 let session = null;
 let navStack = ["home"];
+let deferredInstallPrompt = null;
 
 /* ---------- 유틸 ---------- */
 function $(id){return document.getElementById(id);}
@@ -604,11 +592,8 @@ function showScreen(id, push=true){
   if(id==="changelog") renderChangelog();
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   $("screen-"+id).classList.add("active");
-  $("barTitle").innerHTML = (id==="home") ? "고반식당 MOT 점검" : esc(TITLES[id]||"");
+  $("barTitle").innerHTML = (id==="home") ? "MOT 점검" : esc(TITLES[id]||"");
   $("appbar").classList.toggle("has-back", id!=="home");
-  $("footer").classList.toggle("show", id==="check"||id==="rules");
-  document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active", b.dataset.nav===id));
-  $("barRight").textContent = "v"+APP_VERSION;
   window.scrollTo(0,0);
   if(push && navStack[navStack.length-1]!==id) navStack.push(id);
   if(id==="history") renderHistory();
@@ -624,6 +609,34 @@ function renderChangelog(){
     </div>`).join("");
 }
 function goBack(){ navStack.pop(); showScreen(navStack[navStack.length-1]||"home",false); }
+
+/* ---------- 홈 화면 바로가기 ---------- */
+window.addEventListener("beforeinstallprompt", e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+});
+async function installShortcut(){
+  if(deferredInstallPrompt){
+    try{
+      await deferredInstallPrompt.prompt();
+      const choice=await deferredInstallPrompt.userChoice;
+      toast(choice && choice.outcome==="accepted" ? "홈 화면에 추가했어요" : "추가가 취소됐어요");
+    }catch(e){
+      const guide=$("shortcutGuide");
+      if(guide) guide.classList.add("open");
+      toast("브라우저 메뉴에서 홈 화면에 추가해 주세요");
+    }
+    deferredInstallPrompt=null;
+    return;
+  }
+  const guide=$("shortcutGuide");
+  if(guide) guide.classList.add("open");
+  toast("브라우저 메뉴에서 홈 화면에 추가해 주세요");
+}
+function toggleShortcutGuide(){
+  const guide=$("shortcutGuide");
+  if(guide) guide.classList.toggle("open");
+}
 
 /* ---------- 홈 ---------- */
 function initHome(){
@@ -729,7 +742,9 @@ function updateFooter(){
   $("progFill").style.width=(items.length?Math.round(done/items.length*100):0)+"%";
   $("progText").textContent=`${done} / ${items.length} 항목`;
   const ruleCount=Object.values(session?.rules||{}).filter(r=>r.occurred).length;
-  $("footerMini").textContent = `응답 ${done}/${items.length}` + (ruleCount?` · 위반 ${ruleCount}건`:"") + (done<items.length?` · 미응답 ${items.length-done}건`:" · 전부 응답 완료");
+  const text = `응답 ${done}/${items.length}` + (ruleCount?` · 위반 ${ruleCount}건`:"") + (done<items.length?` · 미응답 ${items.length-done}건`:" · 전부 응답 완료");
+  if($("checkSummary")) $("checkSummary").textContent=text;
+  if($("ruleSummary")) $("ruleSummary").textContent=text;
 }
 function refreshStageNav(){
   const items=visibleItems();
