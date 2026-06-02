@@ -45,7 +45,9 @@
   .appbar .back{font-size:22px; background:none; border:none; color:var(--on-brand); padding:4px 6px; cursor:pointer; line-height:1; visibility:hidden;}
   .appbar.has-back .back{visibility:visible;}
   .appbar h1{font-size:17px; font-weight:700; margin:0; flex:1; letter-spacing:-.3px;}
-  .appbar .right{font-size:13px; opacity:.92; text-align:right; max-width:46%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .appbar .right{font-size:12px; font-weight:700; opacity:.95; color:inherit; background:rgba(255,255,255,.2);
+    border:none; padding:5px 10px; border-radius:99px; cursor:pointer; white-space:nowrap; font-family:inherit;}
+  .appbar .right:active{transform:scale(.96);}
 
   .screen{display:none; padding:16px 16px 120px; animation:fade .18s ease;}
   .screen.active{display:block;}
@@ -197,6 +199,16 @@
   .legend{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;}
   .legend .tag{cursor:default;}
   .req{color:var(--bad);}
+
+  /* 변경 이력 */
+  .cl{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; box-shadow:var(--shadow);}
+  .cl.cur-ver{border-color:var(--brand);}
+  .cl-ver{display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap;}
+  .cl-ver b{font-size:16px; color:var(--brand); letter-spacing:-.3px;}
+  .cl-ver .date{font-size:12px; color:var(--sub);}
+  .cl-ver .cur{font-size:10px; font-weight:800; background:var(--brand); color:var(--on-brand); padding:2px 8px; border-radius:99px;}
+  .cl ul{margin:0; padding-left:18px;}
+  .cl li{font-size:13.5px; margin:5px 0; line-height:1.5;}
 </style>
 </head>
 <body>
@@ -204,7 +216,7 @@
   <div class="appbar" id="appbar">
     <button class="back" id="backBtn" onclick="goBack()">‹</button>
     <h1 id="barTitle">고반F&amp;B MOT 점검</h1>
-    <span class="right" id="barRight"></span>
+    <button class="right" id="barRight" onclick="showScreen('changelog')" title="변경 이력 보기"></button>
   </div>
 
   <!-- HOME -->
@@ -345,6 +357,16 @@
       <p class="hint" style="margin-top:0;">점검 이력은 이 휴대폰(브라우저)에만 저장됩니다.</p>
       <button class="btn secondary" style="color:var(--bad); border-color:var(--bad);" onclick="clearAllData()">모든 이력 삭제</button>
     </div>
+    <div class="card">
+      <h2>버전 정보</h2>
+      <p class="hint" style="margin-top:0;">현재 버전 <b id="s-version" style="color:var(--brand); font-size:14px;"></b></p>
+      <button class="btn secondary" style="margin-top:10px;" onclick="showScreen('changelog')">📜 변경 이력 보기</button>
+    </div>
+  </section>
+
+  <!-- CHANGELOG -->
+  <section class="screen" id="screen-changelog">
+    <div id="changelogList"></div>
   </section>
 
   <!-- FOOTER -->
@@ -503,6 +525,30 @@ const RULE_PENALTY = 3;
 const WEEKDAYS = ["일","월","화","수","목","금","토"];
 const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" };
 
+/* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
+const APP_VERSION = "1.3.0";
+const CHANGELOG = [
+  {v:"1.3.0", date:"2026-06-02", items:[
+    "점검 구분을 SV방문·직원방문·점주자체 3종으로 정리",
+    "화면 상단에 버전 표시 및 변경 이력 화면 추가",
+  ]},
+  {v:"1.2.0", date:"2026-06-02", items:[
+    "김치옥 브랜드 테마 노란색 적용 (글씨 대비 자동 보정)",
+    "매장명을 지점명만 입력하도록 변경 (브랜드 자동 결합)",
+    "진행바·단계 네비게이션 상단 고정",
+    "GitHub Pages 배포 체계로 전환",
+  ]},
+  {v:"1.1.0", date:"2026-06-01", items:[
+    "김치옥 브랜드 추가 (브랜드 선택, 각 50개 항목)",
+    "메아리 인사 가산점(+1점) 도입",
+    "절대 금지 10계명 10개 전체 완성",
+  ]},
+  {v:"1.0.0", date:"2026-05-29", items:[
+    "고반식당 MOT 체크리스트 웹앱 최초 버전",
+    "점수·등급 자동 계산, 구글 시트 전송, CSV 내보내기, 점검 이력",
+  ]},
+];
+
 let session = null;
 let navStack = ["home"];
 
@@ -519,21 +565,29 @@ function saveHistory(arr){localStorage.setItem(LS.hist,JSON.stringify(arr));}
 function curBrand(){return BRANDS[session && session.brand] || BRANDS["고반식당"];}
 
 /* ---------- 화면 전환 ---------- */
-const TITLES={home:"고반F&B MOT 점검",check:"체크리스트",rules:"절대 금지 10계명",result:"점검 결과",history:"점검 이력",settings:"설정"};
+const TITLES={home:"고반F&B MOT 점검",check:"체크리스트",rules:"절대 금지 10계명",result:"점검 결과",history:"점검 이력",settings:"설정",changelog:"변경 이력"};
 function showScreen(id, push=true){
   if(id==="rules"&&session) renderRules();
+  if(id==="changelog") renderChangelog();
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
   $("screen-"+id).classList.add("active");
   $("barTitle").innerHTML = (id==="home") ? "고반F&amp;B MOT 점검" : esc(TITLES[id]||"");
   $("appbar").classList.toggle("has-back", id!=="home");
   $("footer").classList.toggle("show", id==="check"||id==="rules");
-  $("barRight").textContent = (id==="check"||id==="rules") && session ? (session.brand+" · "+session.store) : "";
+  $("barRight").textContent = "v"+APP_VERSION;
   window.scrollTo(0,0);
   if(push && navStack[navStack.length-1]!==id) navStack.push(id);
   if(id==="history") renderHistory();
-  if(id==="settings") $("s-url").value=getSettings().scriptUrl||"";
+  if(id==="settings"){ $("s-url").value=getSettings().scriptUrl||""; $("s-version").textContent="v"+APP_VERSION; }
   if(id==="check"||id==="rules") updateFooter();
   if(id==="result"&&session) buildResult();
+}
+function renderChangelog(){
+  $("changelogList").innerHTML=CHANGELOG.map((c,idx)=>`
+    <div class="cl ${idx===0?'cur-ver':''}">
+      <div class="cl-ver"><b>v${esc(c.v)}</b><span class="date">${esc(c.date)}</span>${idx===0?'<span class="cur">현재</span>':''}</div>
+      <ul>${c.items.map(it=>`<li>${esc(it)}</li>`).join("")}</ul>
+    </div>`).join("");
 }
 function goBack(){ navStack.pop(); showScreen(navStack[navStack.length-1]||"home",false); }
 
