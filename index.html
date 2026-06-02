@@ -418,15 +418,10 @@
       <button class="btn" style="margin-top:14px;" onclick="saveSettings()">저장</button>
     </div>
     <div class="card">
-      <h2>점검 항목 안내</h2>
-      <div class="legend">
-        <span class="tag tag-S">S 서비스</span><span class="tag tag-Q">Q 품질</span>
-        <span class="tag tag-C">C 청결</span><span class="tag tag-SAFE">SAFE 안전</span>
-        <span class="tag tag-MKT">MKT 마케팅</span><span class="tag tag-M">M 운영/기기</span>
-      </div>
+      <h2>점검 안내</h2>
       <div class="hint">평가: ○ 이행=0점 / △ 미흡=−1점 / × 불이행=−2점 · 100점 만점 차감식<br>
-        ★ 가산점: 메아리 인사 등 +1점 (최대 100점)<br>
-        10계명 위반: 1건당 −3점 · 등급: S(90↑) / A(80~89) / B(70~79) / C(70 미만)</div>
+        🚫 절대 금지 10계명 위반: 1건당 −3점<br>
+        등급: S(90↑) / A(80~89) / B(70~79) / C(70 미만)</div>
     </div>
     <div class="card">
       <h2>데이터 관리</h2>
@@ -529,8 +524,12 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.4.1";
 const CHANGELOG = [
+  {v:"1.4.1", date:"2026-06-02", items:[
+    "전 항목 구분이 'S(서비스)'로 통일됨에 따라 항목 카드의 구분 태그 숨김",
+    "설정의 구분 범례·가산점 안내 정리",
+  ]},
   {v:"1.4.0", date:"2026-06-02", items:[
     "체크리스트 v4 반영 — 50항목 → 35문항으로 개편 (전 항목 구분 S 통일, 가산점 폐지)",
     "그릴링 항목 강화(부위별 익힘·돈치맛살·전용 불판크리너 등), 일부 항목에 판단 기준 표시",
@@ -689,7 +688,6 @@ function itemCard(it){
   return `<div class="item ${sel?'answered':''} ${sel==='T'?'flag-T':''} ${sel==='X'?'flag-X':''}" id="item-${esc(it.no)}">
     <div class="item-top">
       <span class="item-no">${esc(it.no)}</span>
-      <span class="tag tag-${it.type}">${it.type}</span>
       <span class="item-text">${star}</span>
     </div>
     ${it.criteria ? `<div class="item-crit">📌 ${esc(it.criteria)}</div>` : ""}
