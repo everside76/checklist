@@ -192,8 +192,7 @@
   .stage-score b{color:var(--bad);} .stage-score b.zero{color:var(--ok);}
 
   .check-summary{font-size:13px; color:var(--sub); text-align:center; margin:12px 0 10px;}
-  .shortcut-guide{display:none; padding:12px; border-radius:10px; background:var(--bg); border:1px solid var(--line);}
-  .shortcut-guide.open{display:block;}
+  .shortcut-guide{display:block; padding:12px; border-radius:10px; background:var(--bg); border:1px solid var(--line);}
 
   .hist{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:10px; box-shadow:var(--shadow-sm);}
   .hist-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
@@ -392,7 +391,6 @@
       <p class="hint" style="margin-top:0;">직원 휴대폰 홈 화면에 앱 아이콘을 추가하면 일반 앱처럼 바로 실행할 수 있습니다.</p>
       <div class="btn-row" style="margin-top:12px;">
         <button class="btn" id="installBtn" onclick="installShortcut()"><span class="icon"><svg><use href="#i-home"></use></svg></span>바로가기 만들기</button>
-        <button class="btn secondary" onclick="toggleShortcutGuide()">방법 보기</button>
       </div>
       <div class="hint shortcut-guide" id="shortcutGuide" style="margin-top:12px;">
         <b>iPhone Safari</b>: 공유 버튼 → 홈 화면에 추가<br>
@@ -528,8 +526,11 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.2.1";
 const CHANGELOG = [
+  {v:"1.2.1", date:"2026-06-02", items:[
+    "홈 화면 바로가기 안내를 항상 표시 ('방법 보기' 버튼 제거)",
+  ]},
   {v:"1.2.0", date:"2026-06-02", items:[
     "모바일 UI 리뉴얼 — 상단바 네비게이션(홈·이력·설정), 로고 적용",
     "홈 화면 상단 배너 제거",
@@ -609,10 +610,6 @@ async function installShortcut(){
   const guide=$("shortcutGuide");
   if(guide) guide.classList.add("open");
   toast("브라우저 메뉴에서 홈 화면에 추가해 주세요");
-}
-function toggleShortcutGuide(){
-  const guide=$("shortcutGuide");
-  if(guide) guide.classList.toggle("open");
 }
 
 /* ---------- 홈 ---------- */
