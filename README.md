@@ -22,8 +22,8 @@
 
 ## 🚀 사용 방법
 1. `index.html`을 웹 호스팅(Netlify/GitHub Pages 등)에 올리거나 브라우저로 열기
-2. 구글 시트 + Apps Script 연동 설정 (→ [사용설명서.md](사용설명서.md) 참고)
-3. 앱 설정에 Apps Script 배포 URL 입력 후 점검 시작
+2. 기본 구글 시트 연동 URL이 앱에 포함되어 있으므로 별도 설정 없이 점검 시작
+3. 다른 구글 시트로 전송해야 할 때만 앱 설정에서 Apps Script 배포 URL 변경
 
 ### GitHub Pages로 배포하기
 저장소 **Settings → Pages → Branch: `main` / root** 선택 후 저장하면
