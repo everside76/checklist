@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#b5402a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="고반 MOT" />
+<title>고반F&B MOT 점검</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23b5402a'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EMOT%3C/text%3E%3C/svg%3E" />
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --ink:#1c1f24; --sub:#6b7280; --line:#e5e7eb;
+    --brand:#b5402a; --brand-d:#8f3120; --brand-soft:#fbeae5; --on-brand:#ffffff;
+    --ok:#15803d; --ok-bg:#dcfce7; --warn:#b45309; --warn-bg:#fef3c7; --bad:#b91c1c; --bad-bg:#fee2e2;
+    --gold:#b8860b; --gold-bg:#fef9e7;
+    --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+    --radius:16px;
+  }
+  /* 김치옥 — 노란색 테마 (밝은 배경 → 글씨는 어둡게) */
+  body.brand-kimchiok{ --brand:#f5b800; --brand-d:#d99e00; --brand-soft:#fef3cd; --on-brand:#1c1f24; --gold:#a06a00; }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#15171c; --card:#1f232b; --ink:#eef0f3; --sub:#9aa1ac; --line:#2c313b;
+      --brand:#e0654c; --brand-d:#c14e36; --brand-soft:#33231f; --on-brand:#ffffff;
+      --ok:#4ade80; --ok-bg:#15321f; --warn:#fbbf24; --warn-bg:#332811; --bad:#f87171; --bad-bg:#3a1717;
+      --gold:#facc15; --gold-bg:#2a2410; }
+    body.brand-kimchiok{ --brand:#fbc828; --brand-d:#e0b400; --brand-soft:#2a2410; --on-brand:#1c1f24; --gold:#e0b400; }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",Roboto,"Noto Sans KR",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5;
+    -webkit-font-smoothing:antialiased; font-size:16px;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .app{max-width:560px; margin:0 auto; min-height:100vh; position:relative;}
+
+  .appbar{
+    position:sticky; top:0; z-index:50; background:var(--brand); color:var(--on-brand);
+    padding:calc(env(safe-area-inset-top) + 12px) 16px 12px; display:flex; align-items:center; gap:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.15); transition:background .2s;
+  }
+  .appbar .back{font-size:22px; background:none; border:none; color:var(--on-brand); padding:4px 6px; cursor:pointer; line-height:1; visibility:hidden;}
+  .appbar.has-back .back{visibility:visible;}
+  .appbar h1{font-size:17px; font-weight:700; margin:0; flex:1; letter-spacing:-.3px;}
+  .appbar .right{font-size:13px; opacity:.92; text-align:right; max-width:46%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  .screen{display:none; padding:16px 16px 120px; animation:fade .18s ease;}
+  .screen.active{display:block;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:14px; box-shadow:var(--shadow);}
+  .card h2{font-size:15px; margin:0 0 12px; letter-spacing:-.3px;}
+  label.field{display:block; margin-bottom:14px;}
+  label.field:last-child{margin-bottom:0;}
+  .field > span{display:block; font-size:13px; color:var(--sub); margin-bottom:6px; font-weight:600;}
+  input[type=text], input[type=date], textarea, select{
+    width:100%; padding:13px 14px; border:1px solid var(--line); border-radius:12px;
+    background:var(--bg); color:var(--ink); font-size:16px; font-family:inherit;
+  }
+  textarea{resize:vertical; min-height:60px;}
+  input:focus,textarea:focus,select:focus{outline:none; border-color:var(--brand);}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    padding:10px 14px; border:1.5px solid var(--line); border-radius:999px; background:var(--card);
+    color:var(--ink); font-size:14px; cursor:pointer; user-select:none; transition:.12s;
+  }
+  .chip.on{background:var(--brand); border-color:var(--brand); color:var(--on-brand); font-weight:600;}
+  .radio-row{display:flex; gap:10px;}
+  .radio-row .chip{flex:1; text-align:center;}
+  .brand-row .chip{flex:1; text-align:center; padding:14px; font-size:15px; font-weight:600;}
+
+  .btn{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    padding:16px; border:none; border-radius:14px; background:var(--brand); color:var(--on-brand);
+    font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; transition:.12s;
+  }
+  .btn:active{transform:scale(.985);}
+  .btn.secondary{background:var(--card); color:var(--ink); border:1.5px solid var(--line);}
+  .btn.ghost{background:transparent; color:var(--brand); border:1.5px solid var(--brand);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn-row{display:flex; gap:10px;}
+  .btn-row .btn{margin:0;}
+
+  /* 진행바 + 단계칩 상단 고정 */
+  .check-sticky{
+    position:sticky; top:var(--appbar-h, 52px); z-index:30;
+    background:var(--bg); margin:0 -16px; padding:10px 16px 4px;
+    box-shadow:0 4px 8px -4px rgba(0,0,0,.12);
+  }
+  .progress-wrap{margin:0 0 10px;}
+  .progress-bar{height:8px; background:var(--line); border-radius:99px; overflow:hidden;}
+  .progress-bar > i{display:block; height:100%; background:var(--brand); width:0; transition:width .25s;}
+  .progress-meta{display:flex; justify-content:space-between; font-size:12px; color:var(--sub); margin-top:6px;}
+
+  .stagenav{display:flex; gap:7px; overflow-x:auto; padding:2px 0 10px; -webkit-overflow-scrolling:touch;}
+  .stagenav::-webkit-scrollbar{display:none;}
+  .stagenav .snav{
+    flex:0 0 auto; padding:7px 12px; border-radius:99px; background:var(--card); border:1px solid var(--line);
+    font-size:13px; color:var(--sub); cursor:pointer; white-space:nowrap;
+  }
+  .stagenav .snav.done{border-color:var(--ok); color:var(--ok);}
+
+  .stage-head{display:flex; align-items:center; gap:8px; margin:22px 2px 10px; font-size:15px; font-weight:800; letter-spacing:-.3px;}
+  .stage-head .stcount{font-size:12px; font-weight:600; color:var(--sub);}
+  .stage-head:first-of-type{margin-top:4px;}
+
+  .item{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px; box-shadow:var(--shadow);}
+  .item.answered{border-left:4px solid var(--ok);}
+  .item.flag-T{border-left:4px solid var(--warn);}
+  .item.flag-X{border-left:4px solid var(--bad);}
+  .item-top{display:flex; gap:8px; align-items:flex-start; margin-bottom:12px;}
+  .item-no{font-size:12px; font-weight:800; color:var(--brand); background:var(--brand-soft); border-radius:8px; padding:3px 7px; flex:0 0 auto; min-width:30px; text-align:center;}
+  .tag{font-size:10px; font-weight:800; padding:3px 6px; border-radius:6px; flex:0 0 auto; letter-spacing:.3px;}
+  .tag-S{background:#e0edff; color:#1d4ed8;} .tag-Q{background:#dcfce7; color:#15803d;}
+  .tag-C{background:#f3e8ff; color:#7e22ce;} .tag-SAFE{background:#fee2e2; color:#b91c1c;}
+  .tag-MKT{background:#fef3c7; color:#b45309;} .tag-M{background:#e5e7eb; color:#4b5563;}
+  @media (prefers-color-scheme: dark){
+    .tag-S{background:#1e3358; color:#93b4ff;} .tag-Q{background:#15321f; color:#86efac;}
+    .tag-C{background:#2e1f43; color:#d8b4fe;} .tag-SAFE{background:#3a1717; color:#fca5a5;}
+    .tag-MKT{background:#332811; color:#fcd34d;} .tag-M{background:#2c313b; color:#9aa1ac;}
+  }
+  .item-text{font-size:14.5px; line-height:1.5; flex:1;}
+  .item-text .star{color:var(--bad); font-weight:700;}
+  .ans-row{display:flex; gap:8px; margin-bottom:2px;}
+  .ans{flex:1; padding:11px 4px; border:1.5px solid var(--line); border-radius:11px; background:var(--card); color:var(--ink); font-size:14px; font-weight:700; cursor:pointer; text-align:center; transition:.1s;}
+  .ans .sym{font-size:18px; display:block; line-height:1.1;}
+  .ans .lbl{font-size:11px; font-weight:600; color:var(--sub);}
+  .ans.sel-O{background:var(--ok-bg); border-color:var(--ok); color:var(--ok);}
+  .ans.sel-T{background:var(--warn-bg); border-color:var(--warn); color:var(--warn);}
+  .ans.sel-X{background:var(--bad-bg); border-color:var(--bad); color:var(--bad);}
+  .ans.sel-O .lbl,.ans.sel-T .lbl,.ans.sel-X .lbl{color:inherit;}
+  .bonus-btn{margin-top:10px; width:100%; padding:10px; border:1.5px dashed var(--gold); border-radius:11px; background:var(--gold-bg); color:var(--gold); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;}
+  .bonus-btn.on{background:var(--gold); color:#fff; border-style:solid;}
+  .note-toggle{margin-top:10px; font-size:12.5px; color:var(--brand); background:none; border:none; padding:4px 0; cursor:pointer; font-weight:600;}
+  .note-box{margin-top:8px; display:none;}
+  .note-box.open{display:block;}
+
+  .rule{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px; box-shadow:var(--shadow);}
+  .rule.on{border-color:var(--bad); background:var(--bad-bg);}
+  .rule-head{display:flex; align-items:center; gap:10px;}
+  .rule-no{font-size:12px; font-weight:800; color:#fff; background:var(--bad); border-radius:8px; padding:4px 8px;}
+  .rule-key{font-weight:800; font-size:15px;}
+  .rule-desc{font-size:13px; color:var(--sub); margin-top:6px;}
+  .switch{margin-left:auto; flex:0 0 auto; width:52px; height:30px; border-radius:99px; background:var(--line); position:relative; cursor:pointer; transition:.15s;}
+  .switch > i{position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:.15s; box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .switch.on{background:var(--bad);}
+  .switch.on > i{left:25px;}
+
+  .score-card{text-align:center; padding:26px 16px;}
+  .score-num{font-size:60px; font-weight:900; line-height:1; letter-spacing:-2px;}
+  .score-num small{font-size:22px; font-weight:700; color:var(--sub);}
+  .grade{display:inline-block; margin-top:10px; padding:6px 18px; border-radius:99px; font-size:18px; font-weight:900; letter-spacing:1px;}
+  .grade-S{background:var(--ok-bg); color:var(--ok);} .grade-A{background:#e0edff; color:#1d4ed8;}
+  .grade-B{background:var(--warn-bg); color:var(--warn);} .grade-C{background:var(--bad-bg); color:var(--bad);}
+  .stat-row{display:flex; gap:8px; margin-top:18px;}
+  .stat{flex:1; background:var(--bg); border-radius:12px; padding:10px 6px;}
+  .stat b{display:block; font-size:20px;} .stat span{font-size:11px; color:var(--sub);}
+  .bd-list{margin:0; padding:0; list-style:none;}
+  .bd-item{display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); font-size:13.5px; align-items:flex-start;}
+  .bd-item:last-child{border-bottom:none;}
+  .bd-flag{flex:0 0 auto; font-size:11px; font-weight:800; padding:3px 7px; border-radius:6px;}
+  .bd-flag.T{background:var(--warn-bg); color:var(--warn);} .bd-flag.X{background:var(--bad-bg); color:var(--bad);}
+  .bd-flag.R{background:var(--bad); color:#fff;}
+  .stage-score{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px;}
+  .stage-score:last-child{border-bottom:none;}
+  .stage-score b{color:var(--bad);} .stage-score b.zero{color:var(--ok);}
+
+  .footer{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:560px;
+    background:var(--card); border-top:1px solid var(--line); padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:none; z-index:40; box-shadow:0 -2px 12px rgba(0,0,0,.08);
+  }
+  .footer.show{display:block;}
+  .footer .mini{font-size:12px; color:var(--sub); text-align:center; margin-bottom:8px;}
+
+  .hist{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px; box-shadow:var(--shadow);}
+  .hist-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
+  .hist-store{font-weight:800; font-size:15px;}
+  .hist-meta{font-size:12px; color:var(--sub);}
+  .badge{font-size:11px; font-weight:700; padding:3px 8px; border-radius:99px;}
+  .badge.sent{background:var(--ok-bg); color:var(--ok);} .badge.unsent{background:var(--warn-bg); color:var(--warn);}
+  .badge.brand{background:var(--brand-soft); color:var(--brand);}
+  .empty{text-align:center; color:var(--sub); padding:50px 20px; font-size:14px;}
+  .empty .big{font-size:40px; margin-bottom:10px;}
+
+  .hint{font-size:12.5px; color:var(--sub); margin-top:8px; line-height:1.55;}
+  .toast{
+    position:fixed; left:50%; bottom:90px; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:var(--bg); padding:13px 20px; border-radius:12px; font-size:14px; font-weight:600;
+    opacity:0; pointer-events:none; transition:.25s; z-index:100; max-width:90%; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,.3);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .legend{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;}
+  .legend .tag{cursor:default;}
+  .req{color:var(--bad);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="appbar" id="appbar">
+    <button class="back" id="backBtn" onclick="goBack()">‹</button>
+    <h1 id="barTitle">고반F&amp;B MOT 점검</h1>
+    <span class="right" id="barRight"></span>
+  </div>
+
+  <!-- HOME -->
+  <section class="screen active" id="screen-home">
+    <div class="card">
+      <h2>브랜드 선택 <i class="req">*</i></h2>
+      <div class="radio-row brand-row" id="f-brand">
+        <div class="chip" data-v="고반식당">🥩 고반식당</div>
+        <div class="chip" data-v="김치옥">🥬 김치옥</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>점검 정보</h2>
+      <label class="field"><span>지점명 <i class="req">*</i></span>
+        <input type="text" id="f-store" placeholder="예) 강남점" autocomplete="off" />
+        <div class="hint">브랜드는 위에서 선택했으니 <b>지점명만</b> 입력하세요. (예: 강남점, 홍대점)</div></label>
+      <label class="field"><span>점검자 <i class="req">*</i></span>
+        <input type="text" id="f-inspector" placeholder="이름" autocomplete="off" /></label>
+      <div class="btn-row" style="gap:12px;">
+        <label class="field" style="flex:1;"><span>점검일</span>
+          <input type="date" id="f-date" /></label>
+        <label class="field" style="flex:0 0 96px;"><span>요일</span>
+          <input type="text" id="f-weekday" readonly /></label>
+      </div>
+      <label class="field"><span>점검 구분</span>
+        <div class="chips" id="f-type">
+          <div class="chip" data-v="정기점검">정기점검</div>
+          <div class="chip" data-v="불시점검">불시점검</div>
+          <div class="chip" data-v="SV방문">SV방문</div>
+          <div class="chip" data-v="점주자체">점주자체</div>
+        </div>
+      </label>
+      <label class="field" style="margin-bottom:0;"><span>주문 방식 <i class="req">*</i></span>
+        <div class="radio-row" id="f-order">
+          <div class="chip" data-v="직접주문">직접주문</div>
+          <div class="chip" data-v="테이블오더">테이블오더</div>
+        </div>
+        <div class="hint">주문 방식에 따라 전용 점검 항목이 자동으로 바뀌어요.</div>
+      </label>
+    </div>
+    <button class="btn" onclick="startInspection()">점검 시작하기</button>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn secondary" onclick="showScreen('history')">📋 점검 이력</button>
+      <button class="btn secondary" onclick="showScreen('settings')">⚙️ 설정</button>
+    </div>
+    <p class="hint" id="resumeHint" style="display:none; text-align:center;"></p>
+  </section>
+
+  <!-- CHECK -->
+  <section class="screen" id="screen-check">
+    <div class="check-sticky">
+      <div class="progress-wrap">
+        <div class="progress-bar"><i id="progFill"></i></div>
+        <div class="progress-meta"><span id="progText">0 / 0 항목</span><span id="progStore"></span></div>
+      </div>
+      <div class="stagenav" id="stagenav"></div>
+    </div>
+    <div id="itemList"></div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn ghost" onclick="showScreen('rules')">🚫 절대 금지 10계명</button>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section class="screen" id="screen-rules">
+    <div class="card" style="background:var(--bad-bg); border-color:var(--bad);">
+      <h2 style="margin:0;">❌ 절대 금지 행동 10계명</h2>
+      <p class="hint" style="margin-top:6px;">발생한 항목만 켜세요. <b>체크 1건당 총점에서 3점 추가 감점</b>되며, 시정 조치 내용은 반드시 기록해 주세요.</p>
+    </div>
+    <div id="ruleList"></div>
+    <button class="btn" onclick="showScreen('check')">체크리스트로 돌아가기</button>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="screen-result">
+    <div class="card score-card">
+      <div class="score-num" id="r-score">0<small> / 100</small></div>
+      <div class="grade" id="r-grade">-</div>
+      <p class="hint" id="r-bonus" style="margin:8px 0 0; color:var(--gold); font-weight:700; display:none;"></p>
+      <div class="stat-row">
+        <div class="stat"><b id="r-ok" style="color:var(--ok)">0</b><span>○ 이행</span></div>
+        <div class="stat"><b id="r-tri" style="color:var(--warn)">0</b><span>△ 미흡</span></div>
+        <div class="stat"><b id="r-x" style="color:var(--bad)">0</b><span>× 불이행</span></div>
+        <div class="stat"><b id="r-rule" style="color:var(--bad)">0</b><span>🚫 위반</span></div>
+      </div>
+      <p class="hint" id="r-unanswered" style="margin-top:14px;"></p>
+    </div>
+
+    <div class="card">
+      <h2>단계별 감점</h2>
+      <div id="r-stages"></div>
+    </div>
+
+    <div class="card" id="r-deduct-card">
+      <h2>감점 항목 상세</h2>
+      <ul class="bd-list" id="r-deducts"></ul>
+    </div>
+
+    <div class="card">
+      <h2>종합 코멘트</h2>
+      <textarea id="r-comment" placeholder="총평, 특이사항, 개선 요청 등을 적어주세요. (선택)"></textarea>
+    </div>
+
+    <button class="btn" id="sendBtn" onclick="sendToSheet()">📤 구글 시트로 결과 전송</button>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn secondary" onclick="downloadCSV()">⬇️ 엑셀(CSV) 저장</button>
+      <button class="btn secondary" onclick="finishToHome()">🏠 처음으로</button>
+    </div>
+    <p class="hint" id="sendHint" style="text-align:center;"></p>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="screen" id="screen-history">
+    <div id="histList"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="screen" id="screen-settings">
+    <div class="card">
+      <h2>구글 시트 연동</h2>
+      <label class="field" style="margin-bottom:0;"><span>Apps Script 배포 URL</span>
+        <input type="text" id="s-url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" /></label>
+      <div class="hint">구글 스프레드시트 → 확장 프로그램 → Apps Script 에 코드를 붙여넣고 <b>웹 앱으로 배포</b>한 뒤 생성되는 URL을 여기에 입력하세요. (설명서 참고)</div>
+      <button class="btn" style="margin-top:14px;" onclick="saveSettings()">저장</button>
+    </div>
+    <div class="card">
+      <h2>점검 항목 안내</h2>
+      <div class="legend">
+        <span class="tag tag-S">S 서비스</span><span class="tag tag-Q">Q 품질</span>
+        <span class="tag tag-C">C 청결</span><span class="tag tag-SAFE">SAFE 안전</span>
+        <span class="tag tag-MKT">MKT 마케팅</span><span class="tag tag-M">M 운영/기기</span>
+      </div>
+      <div class="hint">평가: ○ 이행=0점 / △ 미흡=−1점 / × 불이행=−2점 · 100점 만점 차감식<br>
+        ★ 가산점: 메아리 인사 등 +1점 (최대 100점)<br>
+        🚫 10계명 위반: 1건당 −3점 · 등급: S(90↑) / A(80~89) / B(70~79) / C(70 미만)</div>
+    </div>
+    <div class="card">
+      <h2>데이터 관리</h2>
+      <p class="hint" style="margin-top:0;">점검 이력은 이 휴대폰(브라우저)에만 저장됩니다.</p>
+      <button class="btn secondary" style="color:var(--bad); border-color:var(--bad);" onclick="clearAllData()">모든 이력 삭제</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer" id="footer">
+    <div class="mini" id="footerMini"></div>
+    <button class="btn" onclick="showScreen('result');">결과 보기 →</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   고반F&B 통합 MOT 서비스 체크리스트
+   원본: MOT_서비스체크리스트_v3_260601_고반식당_김치옥.xlsx
+   브랜드: 고반식당 / 김치옥
+   ============================================================ */
+
+/* ---------- 고반식당 50항목 ---------- */
+const ITEMS_GOBAN = [
+  {no:"1", stage:"입점", type:"S",    order:"공통", bonus:1, bonusLabel:"메아리 인사", text:`고객 입장 즉시 '안녕하세요! 고반입니다!' 라고 큰 소리로 인사하는가?`},
+  {no:"2", stage:"입점", type:"S",    order:"공통", text:`인사 시 고객을 바라보며 눈을 맞추는가?`},
+  {no:"3", stage:"입점", type:"S",    order:"공통", text:`인사 시 밝은 표정(미소)을 짓는가?`},
+  {no:"4", stage:"입점", type:"S",    order:"공통", text:`만석 시 '현재 만석이라 자리가 나는 대로 안내해 드리겠습니다' 라고 안내하는가?`},
+  {no:"5", stage:"입점", type:"S",    order:"공통", text:`대기 후 입장 시 '기다려 주셔서 감사합니다' 인사를 하는가?`},
+  {no:"6", stage:"입점", type:"C",    order:"공통", text:`직원 유니폼이 단정한가? (앞치마·모자·머리망 착용)`},
+  {no:"7", stage:"입점", type:"C",    order:"공통", text:`테이블 및 의자가 깨끗하게 닦여 있는가?`},
+  {no:"8", stage:"입점", type:"SAFE", order:"공통", text:`홀 바닥이 깨끗하고, 물기로 미끄러운 구간·위험한 구간은 없는가?`},
+  {no:"9",   stage:"입점", type:"S", order:"직접주문",   text:`주문방법(예: 주문 시 벨을 눌러주세요 등) 안내를 하는가?`},
+  {no:"10",  stage:"입점", type:"S", order:"직접주문",   text:`메뉴판(또는 상종이)이 준비되어 있는가?`},
+  {no:"9-1", stage:"입점", type:"S", order:"테이블오더", text:`자리 안내 후 '주문은 태블릿으로 부탁드릴게요' 멘트를 하는가?`},
+  {no:"10-1",stage:"입점", type:"M", order:"테이블오더", text:`테이블 태블릿 화면이 켜져 있고 주문 가능한 상태인가?`},
+  {no:"11",  stage:"주문", type:"S", order:"직접주문",   text:`주문 후 내용을 복창하여 확인하는가?`},
+  {no:"12",  stage:"주문", type:"S", order:"직접주문",   text:`후식·식사 메뉴 동시 주문 시 제공 타이밍을 확인하여 안내하는가?`},
+  {no:"13",  stage:"주문", type:"S", order:"직접주문",   text:`적절한 추천 메뉴(전략판매메뉴)를 제안하는가? (점심: 점심특선, 저녁: 신메뉴 등)`},
+  {no:"11-1",stage:"주문", type:"S", order:"테이블오더", text:`고객이 태블릿 주문에 어려움을 겪을 때 즉시 도움을 제공하는가?`},
+  {no:"12-1",stage:"주문", type:"S", order:"테이블오더", text:`후식·식사 메뉴 동시 주문 시 제공 타이밍을 확인하여 안내하는가?`},
+  {no:"13-1",stage:"주문", type:"S", order:"테이블오더", text:`적절한 추천 메뉴(전략판매메뉴)가 상단에 위치해 있는가? (점심: 점심특선, 저녁: 신메뉴 등)`},
+  {no:"14", stage:"서빙", type:"S", order:"공통", text:`아기 손님이 있을 때 아기 수저·포크를 선제적으로 제안하는가?`},
+  {no:"15", stage:"서빙", type:"S", order:"공통", text:`흰색·밝은색 옷 고객에게 앞치마를 권유하는가?`},
+  {no:"16", stage:"서빙", type:"S", order:"공통", text:`반찬 제공 시 '실례하겠습니다' 멘트를 하는가?`},
+  {no:"17", stage:"서빙", type:"S", order:"공통", text:`계란찜 제공 시 '뚝배기가 뜨거우니 조심하세요' 라고 안내하는가?`},
+  {no:"18", stage:"서빙", type:"S", order:"공통", text:`'추가 반찬은 셀프바를 이용해 주세요' 안내를 하는가? (셀프바가 없으면 '직원을 불러주세요' 멘트)`},
+  {no:"19", stage:"서빙", type:"Q", order:"공통", text:`제공된 반찬 종류가 메뉴 기준에 맞게 세팅되어 있는가?`},
+  {no:"20", stage:"서빙", type:"Q", order:"공통", text:`반찬에 변색·이물질·부패 징후가 없는가?`},
+  {no:"21", stage:"서빙", type:"C", order:"공통", text:`반찬 그릇 외부·쟁반에 흘린 자국이나 오염이 없는가?`},
+  {no:"22", stage:"서빙", type:"S", order:"공통", text:`음식 제공 속도는 적절한가? (주문 15분 이내 제공하였는가?)`},
+  {no:"23", stage:"그릴링", type:"SAFE", order:"공통", text:`숯 제공 시 숯받이를 들고 안전하게 이동하는가?`},
+  {no:"24", stage:"그릴링", type:"S",    order:"공통", text:`숯 제공 시 '많이 뜨겁습니다. 조심하세요' 라고 안내하는가?`},
+  {no:"25", stage:"그릴링", type:"Q",    order:"공통", text:`고기 제공 전 온도계로 불판 온도를 확인하는가? (★불판이 달궈지지 않은 상태에서 고기를 올리면 −3점 / 10계명 위반)`},
+  {no:"26", stage:"그릴링", type:"Q",    order:"공통", text:`제공된 고기의 색상·외관이 신선해 보이는가?`},
+  {no:"27", stage:"그릴링", type:"S",    order:"공통", text:`뜨거운 숯·메뉴 이동 시 주변 고객에게 사전 안내를 하는가?`},
+  {no:"28", stage:"그릴링", type:"S",    order:"공통", text:`그릴링 전/후 적절한 타이밍에 곁들임에 좋은 반찬·소스를 설명하는가?`},
+  {no:"29", stage:"그릴링", type:"Q",    order:"공통", text:`맛있게 고기를 드시는 법을 안내하는가? (예: 구운 천일염, '완벽한 한 점' 조합 제공 등)`},
+  {no:"30", stage:"그릴링", type:"S",    order:"공통", text:`고기가 타거나 덜 익지 않고 적절히 구워지는가? (셀프그릴링 시 부위별 순서·불 세기 안내)`},
+  {no:"31", stage:"그릴링", type:"Q",    order:"공통", text:`고반물티슈를 사용하여 그릴을 닦아주는가?`},
+  {no:"32", stage:"식사중", type:"S",   order:"공통", text:`식사 중 "음식은 괜찮으세요?" 등 고객 만족 여부를 체크하는가?`},
+  {no:"33", stage:"식사중", type:"S",   order:"공통", text:`고객 호출 시 즉시 반응하는가?`},
+  {no:"34", stage:"식사중", type:"S",   order:"공통", text:`물·반찬 리필을 고객 요청 전에 먼저 물어보는가?`},
+  {no:"35", stage:"식사중", type:"S",   order:"공통", text:`숯이 꺼진 테이블에 적절한 시점에 숯을 빼주는가?`},
+  {no:"36", stage:"식사중", type:"S",   order:"공통", text:`테이블 주변 바닥에 음식물이 떨어졌을 때 즉시 치우는가?`},
+  {no:"37", stage:"식사중", type:"MKT", order:"공통", text:`테이블에 리뷰 요청 안내물(POP·스티커)이 비치되어 있거나, 리뷰 안내를 하는가?`},
+  {no:"38", stage:"계산 및 환송", type:"S", order:"공통", text:`계산 시 '맛있게 드셨어요?' 라고 묻는가?`},
+  {no:"39", stage:"계산 및 환송", type:"S", order:"공통", text:`쿠폰·재방문 안내 등 재방문을 유도하는 행동을 하는가?`},
+  {no:"40", stage:"계산 및 환송", type:"S", order:"공통", text:`쿠폰·할인이 있을 때 안내하고 정확하게 적용하는가?`},
+  {no:"41", stage:"계산 및 환송", type:"S", order:"공통", text:`'감사합니다. 또 오세요!' 환송 인사를 큰 소리로 하는가?`},
+  {no:"42", stage:"계산 및 환송", type:"S", order:"공통", text:`환송 시 고객을 바라보며 인사하는가?`},
+  {no:"43", stage:"퇴식", type:"SAFE", order:"공통", text:`숯 제거 시 숯받이·안전장갑을 착용하는가?`},
+  {no:"44", stage:"퇴식", type:"C",    order:"공통", text:`퇴식 시 매뉴얼에 맞는 행주 구분 사용 및 크린콜 등 적절한 세정제로 닦는가?`},
+  {no:"45", stage:"퇴식", type:"SAFE", order:"공통", text:`버싱 카트가 통로를 막지 않도록 이동하는가?`},
+  {no:"46", stage:"클레임", type:"S", order:"공통", text:`불만 접수 시 변명 없이 즉시 사과하는가?`},
+  {no:"47", stage:"클레임", type:"S", order:"공통", text:`고객 말을 끊지 않고 끝까지 듣는가?`},
+  {no:"48", stage:"클레임", type:"S", order:"공통", text:`해결 방안(교환·환불·추가 서비스)을 제시하는가?`},
+  {no:"49", stage:"클레임", type:"S", order:"공통", text:`클레임 해결 후 '새로 드린 음식은 괜찮으신가요?' 사후 확인을 하는가?`},
+  {no:"50", stage:"클레임", type:"Q", order:"공통", text:`이물질 발견 시 해당 메뉴를 즉시 교환하거나 치우는가?`},
+];
+
+/* ---------- 김치옥 50항목 ---------- */
+const ITEMS_KIMCHIOK = [
+  {no:"1", stage:"입점", type:"S",    order:"공통", bonus:1, bonusLabel:"메아리 인사", text:`고객 입장 즉시 직원 전원이 '어서오세요!! 김치옥입니다.' 라고 큰 소리로 외치는가?`},
+  {no:"2", stage:"입점", type:"S",    order:"공통", text:`인사 시 고객을 바라보며 눈을 맞추는가?`},
+  {no:"3", stage:"입점", type:"S",    order:"공통", text:`인사 시 밝은 표정(미소)을 짓는가?`},
+  {no:"4", stage:"입점", type:"S",    order:"공통", text:`만석 시 '현재 만석이라 자리가 나는 대로 안내해 드리겠습니다' 라고 안내하는가?`},
+  {no:"5", stage:"입점", type:"S",    order:"공통", text:`대기 후 입장 시 '기다려 주셔서 감사합니다' 인사를 하는가?`},
+  {no:"6", stage:"입점", type:"C",    order:"공통", text:`직원 유니폼이 단정한가? (앞치마·모자·머리망 착용)`},
+  {no:"7", stage:"입점", type:"C",    order:"공통", text:`테이블 및 의자가 깨끗하게 닦여 있는가?`},
+  {no:"8", stage:"입점", type:"SAFE", order:"공통", text:`테이블 위 소스류 용기가 채워져 있고 외부가 깨끗한가?`},
+  {no:"9",   stage:"입점", type:"S", order:"직접주문",   text:`주문방법(예: 주문 시 벨을 눌러주세요 등) 안내를 하는가?`},
+  {no:"10",  stage:"입점", type:"S", order:"직접주문",   text:`메뉴판(또는 상종이)이 준비되어 있는가?`},
+  {no:"9-1", stage:"입점", type:"S", order:"테이블오더", text:`자리 안내 후 '주문은 태블릿으로 부탁드릴게요' 멘트를 하는가?`},
+  {no:"10-1",stage:"입점", type:"M", order:"테이블오더", text:`테이블 태블릿 화면이 켜져 있고 주문 가능한 상태인가?`},
+  {no:"11",  stage:"주문", type:"S", order:"직접주문",   text:`주문 시 고객 쪽으로 몸을 낮추고 눈을 맞추는가?`},
+  {no:"12",  stage:"주문", type:"S", order:"직접주문",   text:`적절한 추천 메뉴(전략판매메뉴)를 제안하는가? (점심: 점심특선, 저녁: 신메뉴 등)`},
+  {no:"13",  stage:"주문", type:"S", order:"직접주문",   text:`주문 후 내용을 복창하여 확인하는가?`},
+  {no:"11-1",stage:"주문", type:"S", order:"테이블오더", text:`고객이 태블릿 주문에 어려움을 겪을 때 즉시 도움을 제공하는가?`},
+  {no:"12-1",stage:"주문", type:"S", order:"테이블오더", text:`조리 시간이 긴 메뉴 주문 시 테이블로 직접 와서 안내하는가? (테이블오더에 주문시간 양해 멘트가 적혀 있는가?)`},
+  {no:"13-1",stage:"주문", type:"S", order:"테이블오더", text:`적절한 추천 메뉴(전략판매메뉴)가 상단에 위치해 있는가? (점심: 점심특선, 저녁: 신메뉴 등)`},
+  {no:"14", stage:"서빙", type:"S", order:"공통", text:`아기 손님이 있을 때 아기 수저·포크를 선제적으로 제안하는가?`},
+  {no:"15", stage:"서빙", type:"S", order:"공통", text:`흰색·밝은색 옷 고객에게 앞치마를 권유하는가?`},
+  {no:"16", stage:"서빙", type:"S", order:"공통", text:`반찬 제공 시 '실례하겠습니다' 멘트를 하는가?`},
+  {no:"17", stage:"서빙", type:"S", order:"공통", text:`찌개 뚜껑을 올릴 때 물이 튀지 않도록 손으로 받치는가?`},
+  {no:"18", stage:"서빙", type:"S", order:"공통", text:`추가반찬/앞치마에 대해 안내를 하는가? ('추가 반찬은 직원에게 요청 또는 셀프바 이용, 일회용 앞치마는 벽쪽' 안내)`},
+  {no:"19", stage:"서빙", type:"Q", order:"공통", text:`제공된 반찬 종류가 메뉴 기준에 맞게 세팅되어 있는가? ① 콩나물+고사리+김치(장독대) ② 장아찌류+(쌈장+다진마늘+땡초+참기름) ③ 앞접시(땡마새+안데스소금) ④ 껍데기 주문 시 콩가루 추가`},
+  {no:"20", stage:"서빙", type:"Q", order:"공통", text:`반찬에 변색·이물질·부패 징후가 없는가?`},
+  {no:"21", stage:"서빙", type:"C", order:"공통", text:`반찬 그릇 외부·쟁반에 흘린 자국이나 오염이 없는가?`},
+  {no:"22", stage:"서빙", type:"S", order:"공통", text:`음식 제공 속도는 적절한가? (주문 15분 이내 제공하였는가?)`},
+  {no:"23", stage:"서빙", type:"SAFE", order:"공통", text:`불판을 강불로 켜드리며 장독대(고사리+김치+콩나물)를 테이블에 올리는가?`},
+  {no:"24", stage:"서빙", type:"S",    order:"공통", text:`'장독대에 담겨있는 음식은 저희가 올려드릴게요, 잠시만 기다려 주세요!' 라고 안내하는가?`},
+  {no:"25", stage:"서빙", type:"Q",    order:"공통", text:`고기 제공 전 불판 온도를 확인하는가?`},
+  {no:"26", stage:"서빙", type:"Q",    order:"공통", text:`불판이 달궈지지 않은 상태에서 고기를 올리지 않는가? (★불판 온도 미달 시 −3점 / 10계명 위반)`},
+  {no:"27", stage:"서빙", type:"S",    order:"공통", text:`제공된 고기의 색상·외관이 신선해 보이는가?`},
+  {no:"28", stage:"서빙", type:"S",    order:"공통", text:`두툼삼겹살 → 얇은삼겹살 → 항정살 → 껍데기 순서를 안내하는가?`},
+  {no:"29", stage:"서빙", type:"Q",    order:"공통", text:`엽기땡초·계란찜·찌개류 등 뜨거운 메뉴 제공 시 '뜨거우니 조심하세요!' 라고 안내하는가?`},
+  {no:"30", stage:"서빙", type:"S",    order:"공통", text:`맛있게 고기를 드시는 법을 안내하는가? (예: 구운 천일염, 명이나물+마늘소스+육장 '완벽한 한 점' 조합 등)`},
+  {no:"31", stage:"서빙", type:"Q",    order:"공통", text:`고반물티슈를 사용하여 그릴을 닦아주는가?`},
+  {no:"32", stage:"식사중", type:"S",   order:"공통", text:`식사 중 "음식은 괜찮으세요?" 등 고객 만족 여부를 체크하는가?`},
+  {no:"33", stage:"식사중", type:"S",   order:"공통", text:`고객 호출 시 즉시 반응하는가?`},
+  {no:"34", stage:"식사중", type:"S",   order:"공통", text:`물·반찬 리필을 고객 요청 전에 먼저 물어보는가?`},
+  {no:"35", stage:"식사중", type:"S",   order:"공통", text:`홀 직원이 항상 홀에 있으며 테이블을 수시로 살피는가?`},
+  {no:"36", stage:"식사중", type:"S",   order:"공통", text:`테이블 주변 바닥에 음식물이 떨어졌을 때 즉시 치우는가?`},
+  {no:"37", stage:"식사중", type:"MKT", order:"공통", text:`테이블에 리뷰 요청 안내물(POP·스티커)이 비치되어 있거나, 리뷰 안내를 하는가?`},
+  {no:"38", stage:"계산 및 환송", type:"S", order:"공통", text:`계산 시 '맛있게 드셨어요?' 라고 묻는가?`},
+  {no:"39", stage:"계산 및 환송", type:"S", order:"공통", text:`쿠폰·재방문 안내 등 재방문을 유도하는 행동을 하는가?`},
+  {no:"40", stage:"계산 및 환송", type:"S", order:"공통", text:`쿠폰·할인/주차등록이 있을 때 안내하고 정확하게 적용하는가?`},
+  {no:"41", stage:"계산 및 환송", type:"S", order:"공통", text:`'감사합니다. 또 오세요!' 환송 인사를 큰 소리로 하는가?`},
+  {no:"42", stage:"계산 및 환송", type:"S", order:"공통", text:`환송 시 고객을 바라보며 인사하는가?`},
+  {no:"43", stage:"퇴식", type:"SAFE", order:"공통", text:`퇴식 시 퇴식박스·분무기·행주를 가져가는가?`},
+  {no:"44", stage:"퇴식", type:"C",    order:"공통", text:`퇴식 시 매뉴얼에 맞는 행주 구분 사용 및 크린콜 등 적절한 세정제로 닦는가?`},
+  {no:"45", stage:"퇴식", type:"SAFE", order:"공통", text:`버싱 카트가 통로를 막지 않도록 이동하는가?`},
+  {no:"46", stage:"클레임", type:"S", order:"공통", text:`불만 접수 시 변명 없이 즉시 사과하는가?`},
+  {no:"47", stage:"클레임", type:"S", order:"공통", text:`고객 말을 끊지 않고 끝까지 듣는가?`},
+  {no:"48", stage:"클레임", type:"S", order:"공통", text:`해결 방안(교환·환불·추가 서비스)을 제시하는가?`},
+  {no:"49", stage:"클레임", type:"S", order:"공통", text:`클레임 해결 후 '새로 드린 음식은 괜찮으신가요?' 사후 확인을 하는가?`},
+  {no:"50", stage:"클레임", type:"Q", order:"공통", text:`이물질 발견 시 해당 메뉴를 즉시 교환하거나 치우는가?`},
+];
+
+const BRANDS = {
+  "고반식당": { stages:["입점","주문","서빙","그릴링","식사중","계산 및 환송","퇴식","클레임"], items:ITEMS_GOBAN },
+  "김치옥":   { stages:["입점","주문","서빙","식사중","계산 및 환송","퇴식","클레임"],          items:ITEMS_KIMCHIOK },
+};
+
+/* ---------- 절대 금지 10계명 (공통) ---------- */
+const RULES = [
+  {no:"01", key:"흡연",     desc:"유니폼 입고 매장 반경 내 흡연"},
+  {no:"02", key:"폭언",     desc:"고객 앞에서 직원끼리 사담·잡담·싸우거나 언성 높이기"},
+  {no:"03", key:"퀄리티",   desc:"불판 온도 미달 상태에서 고기 올리기"},
+  {no:"04", key:"책임전가", desc:"고객 앞에서 다른 직원 또는 본사 탓하기"},
+  {no:"05", key:"불친절",   desc:"음식 나올 때 테이블에 던지듯 내려놓기"},
+  {no:"06", key:"불량자세", desc:"고객 앞에서 기대거나 뒷짐 지고 서있기"},
+  {no:"07", key:"감정행동", desc:"감정 상태를 행동(그릇 소리·집게·카트 등)으로 고객에게 드러내기"},
+  {no:"08", key:"무응답",   desc:`고객 문의에 "몰라요", "잠깐만요" 등 응대없이 자리 떠나기`},
+  {no:"09", key:"허위고지", desc:`마감 시간 전 "오늘 재료 다 떨어졌어요" 발언하기`},
+  {no:"10", key:"불량식재", desc:"변색·이취 나는 식재료를 그대로 제공하기"},
+];
+
+const RULE_PENALTY = 3;
+const WEEKDAYS = ["일","월","화","수","목","금","토"];
+const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" };
+
+let session = null;
+let navStack = ["home"];
+
+/* ---------- 유틸 ---------- */
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function weekdayOf(str){const d=new Date(str+"T00:00:00");return isNaN(d)?"":WEEKDAYS[d.getDay()];}
+function uid(){return "MOT-"+Date.now().toString(36)+"-"+Math.floor(performance.now()).toString(36);}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2600);}
+function getSettings(){try{return JSON.parse(localStorage.getItem(LS.set))||{};}catch(e){return {};}}
+function getHistory(){try{return JSON.parse(localStorage.getItem(LS.hist))||[];}catch(e){return [];}}
+function saveHistory(arr){localStorage.setItem(LS.hist,JSON.stringify(arr));}
+function curBrand(){return BRANDS[session && session.brand] || BRANDS["고반식당"];}
+
+/* ---------- 화면 전환 ---------- */
+const TITLES={home:"고반F&B MOT 점검",check:"체크리스트",rules:"절대 금지 10계명",result:"점검 결과",history:"점검 이력",settings:"설정"};
+function showScreen(id, push=true){
+  if(id==="rules"&&session) renderRules();
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $("screen-"+id).classList.add("active");
+  $("barTitle").innerHTML = (id==="home") ? "고반F&amp;B MOT 점검" : esc(TITLES[id]||"");
+  $("appbar").classList.toggle("has-back", id!=="home");
+  $("footer").classList.toggle("show", id==="check"||id==="rules");
+  $("barRight").textContent = (id==="check"||id==="rules") && session ? (session.brand+" · "+session.store) : "";
+  window.scrollTo(0,0);
+  if(push && navStack[navStack.length-1]!==id) navStack.push(id);
+  if(id==="history") renderHistory();
+  if(id==="settings") $("s-url").value=getSettings().scriptUrl||"";
+  if(id==="check"||id==="rules") updateFooter();
+  if(id==="result"&&session) buildResult();
+}
+function goBack(){ navStack.pop(); showScreen(navStack[navStack.length-1]||"home",false); }
+
+/* ---------- 홈 ---------- */
+function applyBrandTheme(brand){ document.body.classList.toggle("brand-kimchiok", brand==="김치옥"); }
+function initHome(){
+  $("f-date").value=todayStr();
+  $("f-weekday").value=weekdayOf(todayStr());
+  $("f-date").addEventListener("change",e=>$("f-weekday").value=weekdayOf(e.target.value));
+  $("f-brand").querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+    $("f-brand").querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
+    c.classList.add("on"); applyBrandTheme(c.dataset.v);
+    if(!$("f-store").value){ $("f-store").placeholder = (c.dataset.v==="김치옥")?"예) 홍대점":"예) 강남점"; }
+  }));
+  $("f-type").querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>c.classList.toggle("on")));
+  $("f-order").querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+    $("f-order").querySelectorAll(".chip").forEach(x=>x.classList.remove("on")); c.classList.add("on");
+  }));
+  const draft=loadDraft();
+  if(draft){
+    $("resumeHint").style.display="block";
+    $("resumeHint").innerHTML=`작성 중이던 점검(${esc(draft.brand||"")} ${esc(draft.store||"")})이 있어요. `+
+      `<a href="#" style="color:var(--brand);font-weight:700" onclick="resumeDraft();return false;">이어서 작성</a> · `+
+      `<a href="#" style="color:var(--sub)" onclick="discardDraft();return false;">삭제</a>`;
+  }
+}
+function startInspection(){
+  const brand=($("f-brand").querySelector(".chip.on")||{}).dataset?.v;
+  const store=$("f-store").value.trim();
+  const inspector=$("f-inspector").value.trim();
+  const order=($("f-order").querySelector(".chip.on")||{}).dataset?.v;
+  if(!brand){toast("브랜드를 선택해 주세요");return;}
+  if(!store){toast("지점명을 입력해 주세요");$("f-store").focus();return;}
+  if(!inspector){toast("점검자를 입력해 주세요");$("f-inspector").focus();return;}
+  if(!order){toast("주문 방식을 선택해 주세요");return;}
+  const types=[...$("f-type").querySelectorAll(".chip.on")].map(c=>c.dataset.v);
+  session={ id:uid(), brand, store, inspector,
+    date:$("f-date").value, weekday:$("f-weekday").value,
+    inspectType:types, order, answers:{}, rules:{}, comment:"", sent:false, sentAt:null };
+  applyBrandTheme(brand);
+  saveDraft(); renderCheck(); showScreen("check");
+}
+
+/* ---------- 임시저장 ---------- */
+function saveDraft(){ if(session) localStorage.setItem(LS.draft, JSON.stringify(session)); }
+function loadDraft(){ try{return JSON.parse(localStorage.getItem(LS.draft));}catch(e){return null;} }
+function discardDraft(){ localStorage.removeItem(LS.draft); $("resumeHint").style.display="none"; toast("임시저장을 삭제했어요"); }
+function resumeDraft(){ session=loadDraft(); if(!session)return; applyBrandTheme(session.brand); renderCheck(); showScreen("check"); }
+
+/* ---------- 점검 항목 렌더 ---------- */
+function visibleItems(){ return curBrand().items.filter(i=>i.order==="공통"||i.order===session.order); }
+function renderCheck(){
+  $("progStore").textContent=session.brand+" · "+session.store;
+  const items=visibleItems();
+  const nav=curBrand().stages.filter(st=>items.some(i=>i.stage===st));
+  $("stagenav").innerHTML=nav.map(st=>`<div class="snav" data-st="${esc(st)}" onclick="jumpStage('${esc(st)}')">${esc(st)}</div>`).join("");
+  let html="";
+  nav.forEach(st=>{
+    const its=items.filter(i=>i.stage===st);
+    html+=`<div class="stage-head" id="st-${esc(st)}">▶ ${esc(st)} <span class="stcount">(${its.length})</span></div>`;
+    its.forEach(it=>{ html+=itemCard(it); });
+  });
+  $("itemList").innerHTML=html;
+  updateFooter(); refreshStageNav();
+}
+function itemCard(it){
+  const a=session.answers[it.no]||{};
+  const sel=a.value||"";
+  const noteOpen=a.note?"open":"";
+  const star=esc(it.text).replace(/(★[^)]*\))/g,'<span class="star">$1</span>');
+  const bonus = it.bonus ? `<button class="bonus-btn ${a.bonusOn?'on':''}" onclick="toggleBonus('${esc(it.no)}')">★ ${esc(it.bonusLabel||'가산')} 가산 +${it.bonus}${a.bonusOn?' (적용됨)':''}</button>` : "";
+  return `<div class="item ${sel?'answered':''} ${sel==='T'?'flag-T':''} ${sel==='X'?'flag-X':''}" id="item-${esc(it.no)}">
+    <div class="item-top">
+      <span class="item-no">${esc(it.no)}</span>
+      <span class="tag tag-${it.type}">${it.type}</span>
+      <span class="item-text">${star}</span>
+    </div>
+    <div class="ans-row">
+      <div class="ans ${sel==='O'?'sel-O':''}" onclick="setAnswer('${esc(it.no)}','O')"><span class="sym">○</span><span class="lbl">이행</span></div>
+      <div class="ans ${sel==='T'?'sel-T':''}" onclick="setAnswer('${esc(it.no)}','T')"><span class="sym">△</span><span class="lbl">미흡 −1</span></div>
+      <div class="ans ${sel==='X'?'sel-X':''}" onclick="setAnswer('${esc(it.no)}','X')"><span class="sym">✕</span><span class="lbl">불이행 −2</span></div>
+    </div>
+    ${bonus}
+    <button class="note-toggle" onclick="toggleNote('${esc(it.no)}')">📝 비고 ${a.note?'(작성됨)':''}</button>
+    <div class="note-box ${noteOpen}" id="note-${esc(it.no)}">
+      <textarea placeholder="특이사항·증빙 메모" oninput="setNote('${esc(it.no)}',this.value)">${esc(a.note||"")}</textarea>
+    </div>
+  </div>`;
+}
+function rerenderCard(no){
+  const it=curBrand().items.find(i=>i.no===no);
+  const card=$("item-"+no); if(!card||!it) return;
+  const tmp=document.createElement("div"); tmp.innerHTML=itemCard(it);
+  card.replaceWith(tmp.firstElementChild);
+}
+function setAnswer(no,val){
+  if(!session.answers[no]) session.answers[no]={};
+  const cur=session.answers[no].value;
+  session.answers[no].value = (cur===val)? "" : val;
+  saveDraft(); rerenderCard(no); updateFooter(); refreshStageNav();
+}
+function toggleBonus(no){
+  if(!session.answers[no]) session.answers[no]={};
+  session.answers[no].bonusOn=!session.answers[no].bonusOn;
+  saveDraft(); rerenderCard(no);
+}
+function toggleNote(no){ const b=$("note-"+no); if(b) b.classList.toggle("open"); }
+function setNote(no,v){ if(!session.answers[no]) session.answers[no]={}; session.answers[no].note=v; saveDraft(); }
+function jumpStage(st){ const el=$("st-"+st); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); }
+
+function answeredCount(){ return visibleItems().filter(i=>(session.answers[i.no]||{}).value).length; }
+function updateFooter(){
+  const items=visibleItems(); const done=answeredCount();
+  $("progFill").style.width=(items.length?Math.round(done/items.length*100):0)+"%";
+  $("progText").textContent=`${done} / ${items.length} 항목`;
+  const ruleCount=Object.values(session?.rules||{}).filter(r=>r.occurred).length;
+  $("footerMini").textContent = `응답 ${done}/${items.length}` + (ruleCount?` · 🚫 위반 ${ruleCount}건`:"") + (done<items.length?` · 미응답 ${items.length-done}건`:" · 전부 응답 완료");
+}
+function refreshStageNav(){
+  const items=visibleItems();
+  document.querySelectorAll("#stagenav .snav").forEach(n=>{
+    const st=n.dataset.st; const its=items.filter(i=>i.stage===st);
+    n.classList.toggle("done", its.length>0 && its.every(i=>(session.answers[i.no]||{}).value));
+  });
+}
+
+/* ---------- 10계명 ---------- */
+function renderRules(){
+  $("ruleList").innerHTML=RULES.map(r=>{
+    const st=session.rules[r.no]||{};
+    const on=st.occurred?"on":"";
+    return `<div class="rule ${on}" id="rule-${r.no}">
+      <div class="rule-head">
+        <span class="rule-no">${r.no}</span>
+        <span class="rule-key">${esc(r.key)}</span>
+        <div class="switch ${on}" onclick="toggleRule('${r.no}')"><i></i></div>
+      </div>
+      <div class="rule-desc">${esc(r.desc)}</div>
+      <div class="note-box ${st.occurred?'open':''}" id="raction-${r.no}">
+        <textarea placeholder="시정 조치 내용 (필수 기록)" oninput="setRuleAction('${r.no}',this.value)">${esc(st.action||"")}</textarea>
+      </div>
+    </div>`;
+  }).join("");
+}
+function toggleRule(no){
+  if(!session.rules[no]) session.rules[no]={};
+  session.rules[no].occurred=!session.rules[no].occurred;
+  $("rule-"+no).classList.toggle("on",session.rules[no].occurred);
+  $("rule-"+no).querySelector(".switch").classList.toggle("on",session.rules[no].occurred);
+  $("raction-"+no).classList.toggle("open",session.rules[no].occurred);
+  saveDraft(); updateFooter();
+}
+function setRuleAction(no,v){ if(!session.rules[no]) session.rules[no]={}; session.rules[no].action=v; saveDraft(); }
+
+/* ---------- 점수 계산 ---------- */
+function penaltyOf(v){ return v==="T"?1 : v==="X"?2 : 0; }
+function compute(){
+  const items=visibleItems();
+  let ok=0,tri=0,x=0,deduct=0,unanswered=0,bonus=0;
+  const stageMap={};
+  items.forEach(i=>{
+    const a=session.answers[i.no]||{};
+    const v=a.value;
+    if(i.bonus && a.bonusOn) bonus+=i.bonus;
+    if(!v){unanswered++; return;}
+    if(v==="O")ok++; else if(v==="T")tri++; else if(v==="X")x++;
+    const p=penaltyOf(v); deduct+=p;
+    stageMap[i.stage]=(stageMap[i.stage]||0)+p;
+  });
+  const ruleViolations=RULES.filter(r=>(session.rules[r.no]||{}).occurred);
+  const ruleDeduct=ruleViolations.length*RULE_PENALTY;
+  const score=Math.max(0, Math.min(100, 100-deduct-ruleDeduct+bonus));
+  const grade=score>=90?"S":score>=80?"A":score>=70?"B":"C";
+  return {items,ok,tri,x,deduct,unanswered,bonus,ruleViolations,ruleDeduct,score,grade,stageMap};
+}
+
+/* ---------- 결과 화면 ---------- */
+function buildResult(){
+  const r=compute();
+  session.comment=$("r-comment").value;
+  $("r-score").innerHTML=`${r.score}<small> / 100</small>`;
+  const g=$("r-grade"); g.textContent="등급 "+r.grade; g.className="grade grade-"+r.grade;
+  $("r-ok").textContent=r.ok; $("r-tri").textContent=r.tri; $("r-x").textContent=r.x; $("r-rule").textContent=r.ruleViolations.length;
+  const b=$("r-bonus");
+  if(r.bonus>0){ b.style.display="block"; b.textContent=`★ 가산점 +${r.bonus}점 반영됨`; } else { b.style.display="none"; }
+  $("r-unanswered").innerHTML = r.unanswered
+    ? `⚠️ 미응답 <b>${r.unanswered}</b>건은 감점에 포함되지 않았어요.`
+    : `✅ 모든 항목에 응답했어요.`;
+  $("r-stages").innerHTML=curBrand().stages.filter(st=>r.items.some(i=>i.stage===st)).map(st=>{
+    const d=r.stageMap[st]||0;
+    return `<div class="stage-score"><span>${esc(st)}</span><b class="${d===0?'zero':''}">${d===0?'감점 없음':'−'+d+'점'}</b></div>`;
+  }).join("");
+  const rows=[];
+  r.items.forEach(i=>{
+    const a=session.answers[i.no]||{};
+    if(a.value==="T"||a.value==="X"){
+      rows.push(`<li class="bd-item"><span class="bd-flag ${a.value}">${a.value==='T'?'△ 미흡':'✕ 불이행'}</span>
+        <div><b>${esc(i.no)}.</b> ${esc(i.text)}${a.note?`<br><span style="color:var(--sub)">└ ${esc(a.note)}</span>`:''}</div></li>`);
+    }
+  });
+  r.ruleViolations.forEach(rl=>{
+    const act=(session.rules[rl.no]||{}).action;
+    rows.push(`<li class="bd-item"><span class="bd-flag R">🚫 ${rl.no}</span>
+      <div><b>${esc(rl.key)}</b> — ${esc(rl.desc)}${act?`<br><span style="color:var(--sub)">└ 조치: ${esc(act)}</span>`:''}</div></li>`);
+  });
+  $("r-deduct-card").style.display = rows.length? "block":"none";
+  $("r-deducts").innerHTML=rows.join("");
+}
+function finishToHome(){
+  persistCurrent(false);
+  localStorage.removeItem(LS.draft);
+  session=null; resetHomeForm(); applyBrandTheme(null);
+  showScreen("home"); navStack=["home"];
+  toast("점검을 저장했어요");
+}
+function persistCurrent(sent){
+  if(!session) return;
+  const r=compute();
+  session.comment=$("r-comment")?$("r-comment").value:session.comment;
+  session.result={score:r.score,grade:r.grade,ok:r.ok,tri:r.tri,x:r.x,bonus:r.bonus,
+    unanswered:r.unanswered,ruleViolations:r.ruleViolations.length,total:r.items.length};
+  session.savedAt=todayStr();
+  if(sent){session.sent=true; session.sentAt=new Date().toISOString();}
+  const hist=getHistory();
+  const idx=hist.findIndex(h=>h.id===session.id);
+  if(idx>=0) hist[idx]=JSON.parse(JSON.stringify(session));
+  else hist.unshift(JSON.parse(JSON.stringify(session)));
+  saveHistory(hist);
+}
+function resetHomeForm(){
+  $("f-store").value=""; $("f-inspector").value="";
+  $("f-date").value=todayStr(); $("f-weekday").value=weekdayOf(todayStr());
+  $("f-brand").querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));
+  $("f-type").querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));
+  $("f-order").querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));
+  $("resumeHint").style.display="none";
+  if($("r-comment")) $("r-comment").value="";
+}
+
+/* ---------- 구글 시트 전송 ---------- */
+function buildPayload(){
+  const r=compute();
+  return {
+    id:session.id, sentAt:new Date().toISOString(),
+    brand:session.brand, store:session.store, inspector:session.inspector,
+    date:session.date, weekday:session.weekday,
+    inspectType:session.inspectType.join(","), order:session.order,
+    score:r.score, grade:r.grade, bonus:r.bonus,
+    ok:r.ok, tri:r.tri, x:r.x, unanswered:r.unanswered,
+    ruleViolations:r.ruleViolations.length, total:r.items.length,
+    comment:($("r-comment").value||"").trim(),
+    items:r.items.map(i=>{
+      const a=session.answers[i.no]||{};
+      return {no:i.no, stage:i.stage, type:i.type, text:i.text,
+        value:a.value||"", label:({O:"이행",T:"미흡",X:"불이행"})[a.value]||"미응답",
+        penalty:penaltyOf(a.value), bonus:(i.bonus&&a.bonusOn)?i.bonus:0, note:a.note||""};
+    }),
+    rules:r.ruleViolations.map(rl=>({no:rl.no,key:rl.key,desc:rl.desc,action:(session.rules[rl.no]||{}).action||""}))
+  };
+}
+async function sendToSheet(){
+  const url=getSettings().scriptUrl;
+  if(!url){ toast("먼저 설정에서 구글 시트 URL을 등록하세요"); showScreen("settings"); return; }
+  const btn=$("sendBtn"); btn.disabled=true; btn.textContent="전송 중…";
+  $("sendHint").textContent="구글 시트로 전송하고 있어요…";
+  const payload=buildPayload();
+  try{
+    const res=await fetch(url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload) });
+    let okFlag=res.ok;
+    try{ const j=await res.json(); okFlag = j && (j.result==="success"||j.ok); }catch(e){}
+    if(okFlag){
+      persistCurrent(true); localStorage.removeItem(LS.draft);
+      btn.textContent="✅ 전송 완료";
+      $("sendHint").innerHTML="구글 시트에 저장됐어요. <b>처음으로</b>를 눌러 새 점검을 시작하세요.";
+      toast("구글 시트로 전송 완료!");
+    }else{ throw new Error("server"); }
+  }catch(err){
+    persistCurrent(false);
+    btn.disabled=false; btn.textContent="🔁 다시 전송";
+    $("sendHint").innerHTML="⚠️ 전송 실패. 결과는 휴대폰에 저장됐어요. 네트워크 확인 후 다시 시도하거나, <b>이력</b>에서 재전송하세요.";
+    toast("전송 실패 — 로컬에 저장됨");
+  }
+}
+
+/* ---------- 이력 ---------- */
+function renderHistory(){
+  const hist=getHistory();
+  if(!hist.length){ $("histList").innerHTML=`<div class="empty"><div class="big">📋</div>아직 저장된 점검이 없어요.</div>`; return; }
+  $("histList").innerHTML=hist.map(h=>{
+    const rs=h.result||{};
+    return `<div class="hist">
+      <div class="hist-top">
+        <span class="hist-store"><span class="badge brand">${esc(h.brand||'')}</span> ${esc(h.store)}</span>
+        <span class="badge ${h.sent?'sent':'unsent'}">${h.sent?'전송됨':'미전송'}</span>
+      </div>
+      <div class="hist-meta">${esc(h.date)} (${esc(h.weekday)}) · ${esc(h.inspector)} · ${esc(h.order)}</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
+        <span class="grade grade-${rs.grade||'C'}" style="margin:0;padding:4px 12px;font-size:14px;">${rs.score??'-'}점 · ${rs.grade||'-'}</span>
+        <span class="hist-meta">△${rs.tri||0} ✕${rs.x||0} 🚫${rs.ruleViolations||0}${rs.bonus?(' ★+'+rs.bonus):''}</span>
+      </div>
+      <div class="btn-row" style="margin-top:12px;">
+        ${h.sent?'':`<button class="btn ghost" style="padding:10px;font-size:14px;" onclick="resendHistory('${h.id}')">🔁 재전송</button>`}
+        <button class="btn secondary" style="padding:10px;font-size:14px;" onclick="deleteHistory('${h.id}')">삭제</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+async function resendHistory(id){
+  const hist=getHistory(); const h=hist.find(x=>x.id===id); if(!h)return;
+  session=JSON.parse(JSON.stringify(h));
+  if(!$("r-comment").value) $("r-comment").value=h.comment||"";
+  await sendToSheet(); renderHistory();
+}
+function deleteHistory(id){ saveHistory(getHistory().filter(h=>h.id!==id)); renderHistory(); toast("삭제했어요"); }
+
+/* ---------- CSV ---------- */
+function downloadCSV(){
+  const r=compute();
+  const lines=[];
+  lines.push(["브랜드","매장","점검자","점검일","요일","점검구분","주문방식","총점","등급","가산점"].join(","));
+  lines.push([session.brand,session.store,session.inspector,session.date,session.weekday,session.inspectType.join("/"),session.order,r.score,r.grade,r.bonus].map(csv).join(","));
+  lines.push("");
+  lines.push(["No","단계","구분","항목","응답","감점","비고"].join(","));
+  r.items.forEach(i=>{
+    const a=session.answers[i.no]||{};
+    lines.push([i.no,i.stage,i.type,i.text,({O:"이행",T:"미흡",X:"불이행"})[a.value]||"미응답",penaltyOf(a.value),a.note||""].map(csv).join(","));
+  });
+  if(r.ruleViolations.length){
+    lines.push(""); lines.push(["10계명 위반","키워드","내용","시정조치"].join(","));
+    r.ruleViolations.forEach(rl=>lines.push([rl.no,rl.key,rl.desc,(session.rules[rl.no]||{}).action||""].map(csv).join(",")));
+  }
+  if(($("r-comment").value||"").trim()){ lines.push(""); lines.push(["종합코멘트",($("r-comment").value).trim()].map(csv).join(",")); }
+  const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`MOT_${session.brand}_${session.store}_${session.date}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast("CSV 파일을 저장했어요");
+}
+function csv(v){v=String(v??"");return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+
+/* ---------- 설정 ---------- */
+function saveSettings(){
+  const url=$("s-url").value.trim();
+  const s=getSettings(); s.scriptUrl=url; localStorage.setItem(LS.set,JSON.stringify(s));
+  toast(url?"저장했어요":"URL을 비웠어요");
+}
+function clearAllData(){
+  if(!confirm("저장된 모든 점검 이력을 삭제할까요? 되돌릴 수 없어요.")) return;
+  localStorage.removeItem(LS.hist); localStorage.removeItem(LS.draft);
+  renderHistory(); toast("모든 이력을 삭제했어요");
+}
+
+/* ---------- 앱바 높이 측정(고정 바 위치 보정) ---------- */
+function setAppbarVar(){
+  var h=$("appbar").offsetHeight;
+  if(h) document.documentElement.style.setProperty("--appbar-h", h+"px");
+}
+window.addEventListener("resize", setAppbarVar);
+window.addEventListener("orientationchange", ()=>setTimeout(setAppbarVar,200));
+
+/* ---------- 시작 ---------- */
+initHome();
+showScreen("home",false);
+setAppbarVar();
+setTimeout(setAppbarVar, 300); // 폰트 로드 후 재보정
+</script>
+</body>
+</html>
