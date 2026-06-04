@@ -296,8 +296,10 @@
       <label class="field"><span>지점명 <i class="req">*</i></span>
         <input type="text" id="f-store" placeholder="예) 강남점" autocomplete="off" />
         <div class="hint"><b>지점명만</b> 입력하세요. (예: 강남점, 역삼점)</div></label>
+      <label class="field"><span>피점검자 (대상 직원)</span>
+        <input type="text" id="f-target" placeholder="평가 대상 직원 이름" autocomplete="off" /></label>
       <label class="field"><span>점검자 <i class="req">*</i></span>
-        <input type="text" id="f-inspector" placeholder="이름" autocomplete="off" /></label>
+        <input type="text" id="f-inspector" placeholder="점검하는 사람 이름" autocomplete="off" /></label>
       <div class="btn-row" style="gap:12px;">
         <label class="field" style="flex:1;"><span>점검일</span>
           <input type="date" id="f-date" /></label>
@@ -530,8 +532,11 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.6.2";
+const APP_VERSION = "1.7.0";
 const CHANGELOG = [
+  {v:"1.7.0", date:"2026-06-02", items:[
+    "점검 정보에 피점검자(대상 직원) 입력칸 추가 — 구글 시트·CSV·이력에 함께 기록",
+  ]},
   {v:"1.6.2", date:"2026-06-02", items:[
     "점검 구분을 본사점검·점주점검·SV점검으로 변경 (v4_1 기준)",
   ]},
@@ -668,13 +673,14 @@ function initHome(){
 }
 function startInspection(){
   const store=$("f-store").value.trim();
+  const target=$("f-target").value.trim();
   const inspector=$("f-inspector").value.trim();
   const order=($("f-order").querySelector(".chip.on")||{}).dataset?.v;
   if(!store){toast("지점명을 입력해 주세요");$("f-store").focus();return;}
   if(!inspector){toast("점검자를 입력해 주세요");$("f-inspector").focus();return;}
   if(!order){toast("주문 방식을 선택해 주세요");return;}
   const types=[...$("f-type").querySelectorAll(".chip.on")].map(c=>c.dataset.v);
-  session={ id:uid(), brand:"고반식당", store, inspector,
+  session={ id:uid(), brand:"고반식당", store, target, inspector,
     date:$("f-date").value, weekday:$("f-weekday").value,
     inspectType:types, order, answers:{}, rules:{}, comment:"", sent:false, sentAt:null };
   saveDraft(); renderCheck(); showScreen("check");
@@ -871,7 +877,7 @@ function persistCurrent(sent){
   saveHistory(hist);
 }
 function resetHomeForm(){
-  $("f-store").value=""; $("f-inspector").value="";
+  $("f-store").value=""; $("f-target").value=""; $("f-inspector").value="";
   $("f-date").value=todayStr(); $("f-weekday").value=weekdayOf(todayStr());
   $("f-type").querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));
   $("f-order").querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));
@@ -884,7 +890,7 @@ function buildPayload(){
   const r=compute();
   return {
     id:session.id, sentAt:new Date().toISOString(),
-    brand:session.brand, store:session.store, inspector:session.inspector,
+    brand:session.brand, store:session.store, target:session.target||"", inspector:session.inspector,
     date:session.date, weekday:session.weekday,
     inspectType:session.inspectType.join(","), order:session.order,
     score:r.score, grade:r.grade, bonus:r.bonus,
@@ -935,7 +941,7 @@ function renderHistory(){
         <span class="hist-store"><span class="badge brand">${esc(h.brand||'')}</span> ${esc(h.store)}</span>
         <span class="badge ${h.sent?'sent':'unsent'}">${h.sent?'전송됨':'미전송'}</span>
       </div>
-      <div class="hist-meta">${esc(h.date)} (${esc(h.weekday)}) · ${esc(h.inspector)} · ${esc(h.order)}</div>
+      <div class="hist-meta">${esc(h.date)} (${esc(h.weekday)}) · ${h.target?'대상 '+esc(h.target)+' · ':''}점검 ${esc(h.inspector)} · ${esc(h.order)}</div>
       <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
         <span class="grade grade-${rs.grade||'C'}" style="margin:0;padding:4px 12px;font-size:14px;">${rs.score??'-'}점 · ${rs.grade||'-'}</span>
         <span class="hist-meta">△${rs.tri||0} ✕${rs.x||0} 위반 ${rs.ruleViolations||0}${rs.bonus?(' ★+'+rs.bonus):''}</span>
@@ -959,8 +965,8 @@ function deleteHistory(id){ saveHistory(getHistory().filter(h=>h.id!==id)); rend
 function downloadCSV(){
   const r=compute();
   const lines=[];
-  lines.push(["브랜드","매장","점검자","점검일","요일","점검구분","주문방식","총점","등급","가산점"].join(","));
-  lines.push([session.brand,session.store,session.inspector,session.date,session.weekday,session.inspectType.join("/"),session.order,r.score,r.grade,r.bonus].map(csv).join(","));
+  lines.push(["브랜드","지점","피점검자","점검자","점검일","요일","점검구분","주문방식","총점","등급","가산점"].join(","));
+  lines.push([session.brand,session.store,session.target||"",session.inspector,session.date,session.weekday,session.inspectType.join("/"),session.order,r.score,r.grade,r.bonus].map(csv).join(","));
   lines.push("");
   lines.push(["No","단계","구분","항목","응답","감점","비고"].join(","));
   r.items.forEach(i=>{
