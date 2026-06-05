@@ -18,7 +18,7 @@
 | `index.html` | 모바일 웹앱 본체 (단일 파일, 빌드 불필요) |
 | `google-apps-script.gs` | 구글 시트 수신 스크립트 (Apps Script) |
 | `사용설명서.md` | 설치·연동·사용 상세 가이드 |
-| `고반식당_서비스MOT체크리스트_v4.xlsx` | 원본 체크리스트 (v4) |
+| `고반식당_서비스MOT체크리스트_v4_2.xlsx` | 원본 체크리스트 (v4_2) |
 
 ## 🚀 사용 방법
 1. `index.html`을 웹 호스팅(Netlify/GitHub Pages 등)에 올리거나 브라우저로 열기
