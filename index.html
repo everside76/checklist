@@ -44,9 +44,7 @@
   .appbar{
     position:sticky; top:0; z-index:50; color:var(--on-brand);
     padding:calc(env(safe-area-inset-top) + 12px) 16px 12px; display:flex; align-items:center; gap:10px;
-    background-color:var(--brand);
-    background-image:linear-gradient(90deg,rgba(94,12,10,.42),rgba(201,43,36,.68)),url("assets/goban-header-texture.jpg");
-    background-size:cover; background-position:left center;
+    background:var(--brand);
     box-shadow:0 10px 24px rgba(92,16,12,.2); transition:background .2s;
   }
   .appbar .back{width:32px; height:32px; font-size:26px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.14); border-radius:9px; color:var(--on-brand); padding:0; cursor:pointer; line-height:1; visibility:hidden;}
@@ -547,8 +545,11 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.7.6";
+const APP_VERSION = "1.7.7";
 const CHANGELOG = [
+  {v:"1.7.7", date:"2026-06-09", items:[
+    "상단 앱바 배경을 텍스처에서 단색(브랜드 레드)으로 변경",
+  ]},
   {v:"1.7.6", date:"2026-06-05", items:[
     "슬로건 '고객을 기분 좋게'를 레드 히어로 배너 형태로 강조 표시",
   ]},
