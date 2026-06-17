@@ -545,8 +545,11 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.7.7";
+const APP_VERSION = "1.7.8";
 const CHANGELOG = [
+  {v:"1.7.8", date:"2026-06-09", items:[
+    "지점명별 브랜드 자동 매핑 — 마포본점→고반식당블랙, 물왕본점→고반가든 (구글 시트 기록)",
+  ]},
   {v:"1.7.7", date:"2026-06-09", items:[
     "상단 앱바 배경을 텍스처에서 단색(브랜드 레드)으로 변경",
   ]},
@@ -705,6 +708,13 @@ function initHome(){
       `<a href="#" style="color:var(--sub)" onclick="discardDraft();return false;">삭제</a>`;
   }
 }
+// 지점명 → 구글 시트에 기록할 브랜드 매핑 (그 외 지점은 '고반식당')
+const STORE_BRAND = { "마포본점":"고반식당블랙", "물왕본점":"고반가든" };
+function brandForStore(store){
+  const s=(store||"").replace(/\s/g,"");
+  for(const key in STORE_BRAND){ if(s.indexOf(key)>=0) return STORE_BRAND[key]; }
+  return "고반식당";
+}
 function startInspection(){
   const store=$("f-store").value.trim();
   const target=$("f-target").value.trim();
@@ -714,7 +724,7 @@ function startInspection(){
   if(!inspector){toast("점검자를 입력해 주세요");$("f-inspector").focus();return;}
   if(!order){toast("주문 방식을 선택해 주세요");return;}
   const types=[...$("f-type").querySelectorAll(".chip.on")].map(c=>c.dataset.v);
-  session={ id:uid(), brand:"고반식당", store, target, inspector,
+  session={ id:uid(), brand:brandForStore(store), store, target, inspector,
     date:$("f-date").value, weekday:$("f-weekday").value,
     inspectType:types, order, answers:{}, rules:{}, comment:"", sent:false, sentAt:null };
   saveDraft(); renderCheck(); showScreen("check");
