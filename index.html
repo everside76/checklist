@@ -595,11 +595,14 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2" 
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.19.0";
+const APP_VERSION = "1.19.1";
 const CHANGELOG = [
+  {v:"1.19.1", date:"2026-07-02", items:[
+    "홀 근무인원 입력칸 오른쪽에 ▲(올림)/▼(내림) 증감 버튼 추가 — 가로 배치로 행 높이 유지",
+    "숫자 입력칸 양식을 다른 입력칸과 통일 (테두리·라운드·글꼴 일치)",
+  ]},
   {v:"1.19.0", date:"2026-07-02", items:[
     "점검 정보 지점명 아래에 '총 홀 근무인원'(명, 점주 포함) 필수 입력 추가",
-    "홀 근무인원 입력칸 오른쪽에 큼직한 ▲/▼ 증감 버튼 추가",
     "시트·CSV·이력에 홀근무인원 기록 (⚠️ 시트 반영은 Apps Script 재배포 필요)",
   ]},
   {v:"1.18.0", date:"2026-07-02", items:[
