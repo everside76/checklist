@@ -608,8 +608,14 @@ const LS = { hist:"mot_history_v2", set:"mot_settings_v1", draft:"mot_draft_v2",
 const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFPl9zkPY7yCzhxWm6rrWbokx0NPU2I_1QqhHOPqQpOHvXiftM9J4hzzH5f9H2mtaLgg/exec";
 
 /* ---------- 앱 버전 & 변경 이력 (최신이 위) ---------- */
-const APP_VERSION = "1.22.0";
+const APP_VERSION = "1.23.0";
 const CHANGELOG = [
+  {v:"1.23.0", date:"2026-07-27", items:[
+    "점검 이력에 '수정하기' 추가 — 아직 전송하지 않은 점검은 체크리스트 응답·비고·10계명·코멘트는 물론 기본정보(지점·홀 인원·피점검자·점검자·일시·주문 방식)까지 전체 항목을 다시 입력할 수 있어요",
+    "수정하기를 누르면 기존 응답이 그대로 채워진 점검 항목 체크 화면이 바로 열립니다. 기본정보까지 고치려면 뒤로가기로 홈에 가서 값을 바꾼 뒤 '점검 시작'을 누르면 됩니다(응답은 그대로 유지)",
+    "수정한 결과는 새 이력이 아니라 원래 이력 건에 덮어써집니다. 홈 상단의 '수정 취소'를 누르면 기존 이력 그대로 되돌아갑니다",
+    "이미 전송된 점검은 기록 보존을 위해 수정할 수 없습니다(결과 보기·삭제만 가능)",
+  ]},
   {v:"1.22.0", date:"2026-07-23", items:[
     "문항별 가중 배점 도입 — 원본 체크리스트(v7)의 배점이 앱에 반영되어 있지 않아 전 문항이 일률적으로 2점(합계 70점)으로 채점되던 문제를 정정",
     "4점 문항 15개 적용: 입점 1·2·3·4번(인사·눈맞춤·미소·만석 안내), 서빙 11번(양해 멘트), 그릴링 14~22번 전 구간, 환송 29번 — 나머지 20문항은 2점",
@@ -769,6 +775,7 @@ const CHANGELOG = [
 ];
 
 let session = null;
+let editingId = null;                                   // 이력에서 "수정하기"로 불러온 미전송 점검의 id
 let navStack = ["home"];
 let deferredInstallPrompt = null;
 
@@ -903,10 +910,17 @@ function startInspection(){
   if(!date){toast("점검일을 선택해 주세요");$("f-date").focus();return;}
   if(!time){toast("점검 시간을 선택해 주세요");$("f-time").focus();return;}
   if(!order){toast("주문 방식을 선택해 주세요");return;}
+  const editing=(editingId && session && session.id===editingId) ? session : null;   // 이력 "수정하기"로 불러온 점검
   saveLastInput({ store, staff, order, date, time, inspector });   // 최근 입력 기억(피점검자 제외)
-  session={ id:uid(), brand:brandForStore(store), store, target, inspector,
+  session={ id: editing?editing.id:uid(), brand:brandForStore(store), store, target, inspector,
     date:$("f-date").value, weekday:$("f-weekday").value, time, staff,
-    order, answers:{}, rules:{}, comment:"", sent:false, sentAt:null };
+    order, answers: editing?editing.answers:{}, rules: editing?editing.rules:{},
+    comment: editing?(editing.comment||""):"", sent:false, sentAt:null };
+  if(editing){                                              // 수정 모드: 기존 응답·비고·코멘트를 그대로 이어서 편집
+    if($("r-comment")) $("r-comment").value=session.comment;
+    if($("resumeHint")) $("resumeHint").style.display="none";
+    editingId=null;
+  }
   saveDraft(); renderCheck(); showScreen("check");
 }
 
@@ -1253,6 +1267,7 @@ function persistCurrent(sent){
   saveHistory(hist);
 }
 function resetHomeForm(){
+  editingId=null;
   $("f-store").value=""; $("f-staff").value=""; $("f-target").value=""; $("f-inspector").value=""; hideStoreSuggest();
   $("f-date").value=todayStr(); $("f-weekday").value=weekdayOf(todayStr()); fillTimeSelect();
   $("f-order").querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));
@@ -1327,6 +1342,7 @@ function renderHistory(){
       </div>
       <div class="btn-row" style="margin-top:12px;">
         <button class="btn ghost" style="padding:10px;font-size:14px;" onclick="event.stopPropagation();viewHistory('${h.id}')">📋 결과 보기</button>
+        ${h.sent?'':`<button class="btn ghost" style="padding:10px;font-size:14px;" onclick="event.stopPropagation();editHistory('${h.id}')">✏️ 수정하기</button>`}
         ${h.sent?'':`<button class="btn ghost" style="padding:10px;font-size:14px;" onclick="event.stopPropagation();resendHistory('${h.id}')">🔁 재전송</button>`}
         <button class="btn secondary" style="padding:10px;font-size:14px;" onclick="event.stopPropagation();deleteHistory('${h.id}')">삭제</button>
       </div>
@@ -1335,9 +1351,55 @@ function renderHistory(){
 }
 function viewHistory(id){
   const h=getHistory().find(x=>x.id===id); if(!h){ toast("점검 기록을 찾을 수 없어요"); return; }
+  editingId=null;
   session=JSON.parse(JSON.stringify(h));            // 저장된 점검을 세션으로 복원해 결과 화면 재구성
   if($("r-comment")) $("r-comment").value=h.comment||"";
   showScreen("result");
+}
+/* --- 미전송 점검 수정: 기본정보부터 체크리스트·10계명·코멘트까지 전체 항목 재입력 --- */
+function editHistory(id){
+  const h=getHistory().find(x=>x.id===id);
+  if(!h){ toast("점검 기록을 찾을 수 없어요"); return; }
+  if(h.sent){ toast("이미 전송된 점검은 수정할 수 없어요"); return; }
+  const d=loadDraft();                              // 다른 점검을 작성 중이면 덮어쓰기 전에 확인
+  if(d && d.id!==h.id && d.answers && Object.values(d.answers).some(a=>a&&a.value)){
+    if(!confirm(`작성 중이던 점검(${d.store||""})이 있어요.\n수정을 시작하면 그 임시저장은 삭제됩니다. 계속할까요?`)) return;
+  }
+  session=JSON.parse(JSON.stringify(h));
+  delete session.online;
+  editingId=h.id;
+  saveDraft();
+  fillHomeForm(session);                            // 홈으로 되돌아갈 때를 대비해 기본정보도 채워 둠
+  if($("r-comment")) $("r-comment").value=session.comment||"";
+  renderCheck();                                    // 점검 항목 체크 화면부터 바로 수정
+  navStack=["home","check"]; showScreen("check",false);
+  refreshEditHint();
+  toast("수정 모드 — 점검 항목부터 확인하세요");
+}
+function fillHomeForm(s){
+  $("f-store").value=s.store||""; hideStoreSuggest();
+  $("f-staff").value=s.staff||"";
+  $("f-target").value=s.target||"";
+  $("f-inspector").value=s.inspector||"";
+  if(s.date){ $("f-date").value=s.date; $("f-weekday").value=s.weekday||weekdayOf(s.date); }
+  const sel=$("f-time");
+  if(sel && s.time){
+    if(![...sel.options].some(o=>o.value===s.time)) sel.add(new Option(s.time,s.time));
+    sel.value=s.time;
+  }
+  $("f-order").querySelectorAll(".chip").forEach(c=>c.classList.toggle("on", c.dataset.v===s.order));
+}
+function refreshEditHint(){                          // 수정 모드 안내(홈 상단). 표시했으면 true
+  const el=$("resumeHint"); if(!el) return false;
+  if(!(editingId && session && session.id===editingId)) return false;
+  el.style.display="block";
+  el.innerHTML=`✏️ <b>수정 중</b> — ${esc(session.store||"")} ${esc(session.date||"")} 점검. 기본정보를 고친 뒤 <b>점검 시작</b>을 누르면 기존 응답이 그대로 열려요. `+
+    `<a href="#" style="color:var(--sub)" onclick="cancelEdit();return false;">수정 취소</a>`;
+  return true;
+}
+function cancelEdit(){
+  editingId=null; session=null; storageRemove(LS.draft);
+  resetHomeForm(); toast("수정을 취소했어요 (기존 이력은 그대로예요)");
 }
 async function resendHistory(id){
   const hist=getHistory(); const h=hist.find(x=>x.id===id); if(!h)return;
